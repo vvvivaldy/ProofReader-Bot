@@ -13,3 +13,4 @@ import logging
 import sqlite3
 from datetime import date, timedelta
 from pybit import spot
+from cryptography.fernet import Fernet
