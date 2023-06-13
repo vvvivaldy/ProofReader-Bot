@@ -6,13 +6,8 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 # Дата конца подписки
 def next_month(today):
-    tek = today.split("-")
-    month = int(tek[1])
-    if month != 12:
-        month += 1
-    else:
-        month = 1
-    return date(int(tek[0]), month, int(tek[2]))
+    delta = timedelta(days=30)
+    return today + delta
 
 
 # Успещный запуск бота
@@ -24,8 +19,8 @@ async def on_startup(_):
 @dp.message_handler(commands=["start"])
 async def start_func(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
-                           text=f"Приветствую, {message.from_user.username}! Этот бот создан для совершения "
-                                f"автоматических манипуляций на криптобирже Bybit. Подробнее ты можешь узнать нажав  "
+                           text=f"Приветствую, {message.from_user.username}! ВСТАВИТЬ ВСТУПЛЕНИЕ. "
+                                f"Подробнее ты можешь узнать нажав  "
                                 f"на кнопку \"Описание\"",
                            reply_markup=kb_free)
     # Подключение к бд
@@ -46,7 +41,7 @@ async def start_func(message: types.Message):
                                    text="Мы нашли вашу учетную запись в базе данных.",
                                    reply_markup=kb_free)
         # Если статус платный
-        else:
+        elif result[0] == "paid":
             cursor.execute("SELECT api_secret FROM users WHERE user_id = ?", (message.from_user.id,))
             profile = cursor.fetchone()
             if profile[0] is None:
@@ -107,12 +102,16 @@ async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
 async def successfull_payment(message: types.Message):
     print("Success")
     payment_info = message.successful_payment.to_python()
+    tranzaktion = ""
     for k, v in payment_info.items():
+        if k == "telegram_payment_charge_id":
+            tranzaktion = v
         print(f"{k} = {v}")
-
+    print('\n')
     await bot.send_message(message.chat.id,
-                           f"Платеж на сумму <b>{message.successful_payment.total_amount // 100} \
-                           {message.successful_payment.currency}</b> прошел успешно. Приятного пользования!",
+                           f"Платеж на сумму <b>{message.successful_payment.total_amount // 100} "
+                           f"{message.successful_payment.currency}</b> прошел успешно. "
+                           f"Номер вашей транзакции {tranzaktion}. Приятного пользования!",
                            parse_mode="HTML",
                            reply_markup=kb_unreg
                            )
@@ -121,7 +120,7 @@ async def successfull_payment(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     cursor.execute(f"""Update users set status = "paid", subscribe_start = "{date.today()}", 
-                       subscribe_finish = "{next_month(str(date.today()))}" 
+                       subscribe_finish = "{next_month(date.today())}" 
                        where user_id = {message.from_user.id}""")
     conn.commit()
     cursor.close()
@@ -250,7 +249,7 @@ async def balance_func(message: types.Message):
 @dp.message_handler()
 async def unknown_func(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
-                           text="Вы ввели несуществующую команду. Повторите попытку")
+                           text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 # Запуск бота

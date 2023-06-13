@@ -23,11 +23,11 @@ kb_reg.add(b_p1).add(b_p2).add(b3).add(b_p4)
 # Клавиатура профиля
 kb_profile = ReplyKeyboardMarkup(resize_keyboard=True)
 prof_b1 = KeyboardButton("Баланс")
-kb_profile.add(prof_b1)
+prof_b2 = KeyboardButton("В меню")
+kb_profile.add(prof_b1).add(prof_b2)
 
 # Инлайн клавиатура инструкции
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)
 b_ins1 = "Как начать пользоваться ботом?"
 b_ins2 = "❌Предостережения❌"
-b_ins3 = "В меню"
-kb_instruct.add(b_ins1).add(b_ins2).add(b_ins3)
+kb_instruct.add(b_ins1).add(b_ins2).add(prof_b2)
