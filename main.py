@@ -225,8 +225,10 @@ async def balance_func(message: types.Message):
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
 
         session = spot.HTTP(endpoint="https://api.bybit.com", api_key=data[1], api_secret=data[0])
+        session1 = HTTP(endpoint="https://api.bybit.com", api_key=data[1], api_secret=data[0])
+        balance = session1.get_wallet_balance()["result"]["USDT"]['available_balance']
         info = session.get_wallet_balance()["result"]["balances"]
-        if len(info) != 0:
+        if len(info) != 0 and int(balance) != 0:
             coins_list = session.get_last_traded_price()["result"]["list"]
             total = 0
             text = ""
@@ -235,14 +237,15 @@ async def balance_func(message: types.Message):
                     if coin["symbol"] == f"{obj['coin']}USDT":
                         text += f"<b>{obj['coin']}</b>: {str(float(coin['price']) * float(obj['total']))} $\n"
                         total += float(coin["price"]) * float(obj["total"])
-            text += f"<b>Всего</b>: {total} $"
+            total += balance
+            text += f"<b>Стоимость всех активов</b>: {int(total * 100) / 100} $"
             await bot.send_message(chat_id=message.from_user.id,
                                    text=text,
                                    parse_mode="HTML")
-
         else:
             await bot.send_message(chat_id=message.from_user.id,
                                    text="На балансе нет средств")
+
 
 
 # Хендлер хуйни

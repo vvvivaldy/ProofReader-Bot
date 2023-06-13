@@ -11,6 +11,7 @@ from data.classes import Auth
 
 import logging
 import sqlite3
+from pybit import HTTP
 from datetime import date, timedelta
 from pybit import spot
 from cryptography.fernet import Fernet
