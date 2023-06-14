@@ -6,6 +6,7 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 decrypted_key = b""
 decrypted_secret = b""
 
+
 # Дата конца подписки
 def next_month(today):
     delta = timedelta(days=30)
@@ -31,11 +32,11 @@ async def start_func(message: types.Message):
     info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
     # Если нет в бд
     if info is None:
-        cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '');""")
+        cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '', '');""")
         conn.commit()
     # Если есть в бд
     else:
-        cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+        cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
         result = cursor.fetchone()
         # Если статус бесплатный
         if result[0] == "free":
@@ -44,9 +45,7 @@ async def start_func(message: types.Message):
                                    reply_markup=kb_free)
         # Если статус платный
         elif result[0] == "paid":
-            cursor.execute("SELECT api_secret FROM users WHERE user_id = ?", (message.from_user.id,))
-            profile = cursor.fetchone()
-            if profile[0] is None:
+            if result[1] == "":
                 await bot.send_message(chat_id=message.from_user.id,
                                        text="Мы нашли вашу учетную запись в базе данных.",
                                        reply_markup=kb_unreg)
@@ -133,18 +132,23 @@ async def successfull_payment(message: types.Message):
 async def menu_func(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+    cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
     result = cursor.fetchone()
     if result[0] == "free":
         await bot.send_message(chat_id=message.from_user.id,
                                text="Вы вернулись в меню🦩",
                                parse_mode="HTML",
                                reply_markup=kb_free)
-    else:
+    elif result[0] == "paid" and result[1] != "":
         await bot.send_message(chat_id=message.from_user.id,
                                text="Вы вернулись в меню🦩",
                                parse_mode="HTML",
                                reply_markup=kb_reg)
+    elif result[0] == "paid" and result[1] == "":
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в меню🦩",
+                               parse_mode="HTML",
+                               reply_markup=kb_unreg)
 
 
 # Хендлер Предостережения
@@ -206,19 +210,19 @@ async def set_api_secret(message: types.Message, state: FSMContext):
             api_secret=s.get("api_secret"),
         )
         test.get_account_info()
+
         # Шифровка ключей
         cipher_key = Fernet.generate_key()
         cipher = Fernet(cipher_key)
-        api_key = b's.get("api_key")'
-        api_secret = b's.get("api_secret")'
+        api_key = s.get("api_key").encode("utf-8")
+        api_secret = s.get("api_secret").encode("utf-8")
         encrypted_key = cipher.encrypt(api_key)
         encrypted_secret = cipher.encrypt(api_secret)
         global decrypted_key
         decrypted_key = cipher.decrypt(encrypted_key)
         global decrypted_secret
-        decrypted_secret = cipher.decrypt(encrypted_secret) 
-        print(decrypted_secret.decode('utf-8'))
-        print(decrypted_key.decode('utf-8'))
+        decrypted_secret = cipher.decrypt(encrypted_secret)
+
         # Запись Данных в бд
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
@@ -270,7 +274,7 @@ async def balance_func(message: types.Message):
         for obj in coins:
             total_balance_msg += f"<b>{obj['coin']}</b>: <b>{obj['equity']}</b>\n"
 
-        total_balance_msg += f"Общий баланс: {total_balance} $"
+        total_balance_msg += f"<b>Общий баланс: {total_balance}</b> $"
         await bot.send_message(chat_id=message.from_user.id,
                                text=total_balance_msg,
                                parse_mode="HTML")
