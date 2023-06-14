@@ -11,7 +11,7 @@ from data.classes import Auth
 
 import logging
 import sqlite3
-from pybit import HTTP
 from datetime import date, timedelta
-from pybit import spot, exceptions
 from cryptography.fernet import Fernet
+from pybit.unified_trading import HTTP
+from pybit import exceptions

@@ -199,8 +199,11 @@ async def set_api_secret(message: types.Message, state: FSMContext):
         await state.finish()
     s = await state.get_data()
     try:
-        test_conn = spot.HTTP(endpoint="https://api.bybit.com", api_key=s.get("api_key"), api_secret=s.get("api_secret"))
-        test_conn.get_wallet_balance()
+        test = HTTP(
+            api_key=s.get("api_key"),
+            api_secret=s.get("api_secret"),
+        )
+        test.get_account_info()
 
         # Запись Данных в бд
         conn = sqlite3.connect('db/database.db')
@@ -214,6 +217,7 @@ async def set_api_secret(message: types.Message, state: FSMContext):
 
     except exceptions.InvalidRequestError as e:
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
+        print(e)
 
 
 # Проверка на полную регистрацию
@@ -240,27 +244,22 @@ async def balance_func(message: types.Message):
         cursor = conn.cursor()
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
 
-        session = spot.HTTP(endpoint="https://api.bybit.com", api_key=data[1], api_secret=data[0])
-        session1 = HTTP(endpoint="https://api.bybit.com", api_key=data[1], api_secret=data[0])
-        balance = session1.get_wallet_balance()["result"]["USDT"]['available_balance']
-        info = session.get_wallet_balance()["result"]["balances"]
-        if len(info) != 0 and int(balance) != 0:
-            coins_list = session.get_last_traded_price()["result"]["list"]
-            total = 0
-            text = ""
-            for obj in info:
-                for coin in coins_list:
-                    if coin["symbol"] == f"{obj['coin']}USDT":
-                        text += f"<b>{obj['coin']}</b>: {str(float(coin['price']) * float(obj['total']))} $\n"
-                        total += float(coin["price"]) * float(obj["total"])
-            total += balance
-            text += f"<b>Стоимость всех активов</b>: {int(total * 100) / 100} $"
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text=text,
-                                   parse_mode="HTML")
-        else:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="На балансе нет средств")
+        session = HTTP(
+            api_key=data[1],
+            api_secret=data[0],
+        )
+        wallet_balance_data = session.get_wallet_balance(accountType="UNIFIED")["result"]["list"][0]
+        coins = wallet_balance_data["coin"]
+        total_balance = wallet_balance_data["totalEquity"]
+        total_balance_msg = ""
+
+        for obj in coins:
+            total_balance_msg += f"<b>{obj['coin']}</b>: <b>{obj['equity']}</b>\n"
+
+        total_balance_msg += f"Общий баланс: {total_balance} $"
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=total_balance_msg,
+                               parse_mode="HTML")
 
 
 # Хендлер хуйни
