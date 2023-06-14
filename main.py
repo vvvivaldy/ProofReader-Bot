@@ -165,10 +165,19 @@ async def instruct_func(message: types.Message):
 # Хендлер Авторизации
 @dp.message_handler(Text(equals="Авторизация"))
 async def auth_func(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id,
-                           text="Введите ваш <b>api_key</b>: ",
-                           parse_mode="HTML")
-    await Auth.api_key.set()
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+    result = cursor.fetchone()
+    if result[0] == "paid":
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Введите ваш <b>api_key</b>: ",
+                               parse_mode="HTML")
+        await Auth.api_key.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы еще не оплатили подписку",
+                               parse_mode="HTML")
 
 
 # Хендлер получения Api-key
@@ -188,16 +197,23 @@ async def set_api_secret(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['api_secret'] = message.text
         await state.finish()
-    await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
-
-    # Запись Данных в бд
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
     s = await state.get_data()
-    cursor.execute(f"""UPDATE users SET api_secret = "{s.get("api_secret")}", api_key = "{s.get("api_key")}"
-                           WHERE user_id = {message.from_user.id}""")
-    conn.commit()
-    cursor.close()
+    try:
+        test_conn = spot.HTTP(endpoint="https://api.bybit.com", api_key=s.get("api_key"), api_secret=s.get("api_secret"))
+        test_conn.get_wallet_balance()
+
+        # Запись Данных в бд
+        conn = sqlite3.connect('db/database.db')
+        cursor = conn.cursor()
+        cursor.execute(f"""UPDATE users SET api_secret = "{s.get("api_secret")}", api_key = "{s.get("api_key")}"
+                               WHERE user_id = {message.from_user.id}""")
+        conn.commit()
+        cursor.close()
+
+        await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
+
+    except exceptions.InvalidRequestError as e:
+        await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
 
 
 # Проверка на полную регистрацию
@@ -245,7 +261,6 @@ async def balance_func(message: types.Message):
         else:
             await bot.send_message(chat_id=message.from_user.id,
                                    text="На балансе нет средств")
-
 
 
 # Хендлер хуйни
