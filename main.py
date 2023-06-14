@@ -3,6 +3,8 @@ from data.imports import *
 bot = Bot(TG_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+decrypted_key = b""
+decrypted_secret = b""
 
 # Дата конца подписки
 def next_month(today):
@@ -204,11 +206,23 @@ async def set_api_secret(message: types.Message, state: FSMContext):
             api_secret=s.get("api_secret"),
         )
         test.get_account_info()
-
+        # Шифровка ключей
+        cipher_key = Fernet.generate_key()
+        cipher = Fernet(cipher_key)
+        api_key = b's.get("api_key")'
+        api_secret = b's.get("api_secret")'
+        encrypted_key = cipher.encrypt(api_key)
+        encrypted_secret = cipher.encrypt(api_secret)
+        global decrypted_key
+        decrypted_key = cipher.decrypt(encrypted_key)
+        global decrypted_secret
+        decrypted_secret = cipher.decrypt(encrypted_secret) 
+        print(decrypted_secret.decode('utf-8'))
+        print(decrypted_key.decode('utf-8'))
         # Запись Данных в бд
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
-        cursor.execute(f"""UPDATE users SET api_secret = "{s.get("api_secret")}", api_key = "{s.get("api_key")}"
+        cursor.execute(f"""UPDATE users SET api_secret = "{encrypted_key}", api_key = "{encrypted_secret}"
                                WHERE user_id = {message.from_user.id}""")
         conn.commit()
         cursor.close()
@@ -243,11 +257,11 @@ async def balance_func(message: types.Message):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
-
         session = HTTP(
-            api_key=data[1],
-            api_secret=data[0],
+            api_key=decrypted_key.decode('utf-8'),
+            api_secret=decrypted_secret.decode('utf-8')
         )
+        
         wallet_balance_data = session.get_wallet_balance(accountType="UNIFIED")["result"]["list"][0]
         coins = wallet_balance_data["coin"]
         total_balance = wallet_balance_data["totalEquity"]
