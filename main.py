@@ -5,8 +5,18 @@ load_dotenv()
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-decrypted_key = b""
-decrypted_secret = b""
+
+# Расшифровка
+def decrypt_api(api):
+    cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
+    return cipher.decrypt(api).decode('utf-8')
+
+
+# Шифровка
+def encrypt_api(api):
+    cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
+    return cipher.encrypt(bytes(api,encoding='utf-8'))
+
 
 
 # Дата конца подписки
@@ -180,65 +190,43 @@ async def auth_func(message: types.Message):
     result = cursor.fetchone()
     if result[0] == "paid":
         await bot.send_message(chat_id=message.from_user.id,
-                               text="Введите ваш <b>api_key</b>: ",
+                               text="Введите ваш <b>api_key</b> и <b>api_secret</b> через пробел: ",
                                parse_mode="HTML")
-        await Auth.api_key.set()
+        await Auth.api.set()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Вы еще не оплатили подписку",
                                parse_mode="HTML")
 
 
-# Хендлер получения Api-key
-@dp.message_handler(state=Auth.api_key)
-async def set_api_key(message: types.Message, state: FSMContext):
+# Хендлер получения Api
+@dp.message_handler(state=Auth.api)
+async def set_api(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
-        proxy['api_key'] = message.text
-        await Auth.api_secret.set()
-    await bot.send_message(chat_id=message.from_user.id,
-                           text="Введите ваш <b>api_secret</b>: ",
-                           parse_mode="HTML")
-
-
-# Хендлер получения Api-secret
-@dp.message_handler(state=Auth.api_secret)
-async def set_api_secret(message: types.Message, state: FSMContext):
-    async with state.proxy() as proxy:
-        proxy['api_secret'] = message.text
+        proxy['api'] = message.text
         await state.finish()
     s = await state.get_data()
+
+    api_key = encrypt_api(s['api'].partition(' ')[0])
+    api_secret = encrypt_api(s['api'].partition(' ')[2])
     try:
         test = HTTP(
-            api_key=s.get("api_key"),
-            api_secret=s.get("api_secret"),
-        )
+            api_key=decrypt_api(api_key),
+            api_secret=decrypt_api(api_secret))
         test.get_account_info()
-
-        # Шифровка ключей
-        cipher_key = Fernet.generate_key()
-        cipher = Fernet(cipher_key)
-        api_key = s.get("api_key").encode("utf-8")
-        api_secret = s.get("api_secret").encode("utf-8")
-        encrypted_key = cipher.encrypt(api_key)
-        encrypted_secret = cipher.encrypt(api_secret)
-        global decrypted_key
-        decrypted_key = cipher.decrypt(encrypted_key)
-        global decrypted_secret
-        decrypted_secret = cipher.decrypt(encrypted_secret)
-
-        # Запись Данных в бд
-        conn = sqlite3.connect('db/database.db')
-        cursor = conn.cursor()
-        cursor.execute(f"""UPDATE users SET api_secret = "{encrypted_key}", api_key = "{encrypted_secret}"
-                               WHERE user_id = {message.from_user.id}""")
-        conn.commit()
-        cursor.close()
-
-        await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
-
     except exceptions.InvalidRequestError as e:
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
         print(e)
+        return
+    
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    cursor.execute(f"""UPDATE users SET api_secret = "{api_secret}", api_key = "{api_key}"
+                            WHERE user_id = {message.from_user.id}""")
+    conn.commit()
+    cursor.close()
+    await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
+
 
 
 # Проверка на полную регистрацию
@@ -265,8 +253,8 @@ async def balance_func(message: types.Message):
         cursor = conn.cursor()
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
         session = HTTP(
-            api_key=decrypted_key.decode('utf-8'),
-            api_secret=decrypted_secret.decode('utf-8')
+            api_key=decrypt_api(data[1][2:-1]),
+            api_secret=decrypt_api(data[0][2:-1])
         )
         
         wallet_balance_data = session.get_wallet_balance(accountType="UNIFIED")["result"]["list"][0]
@@ -293,8 +281,3 @@ async def unknown_func(message: types.Message):
 # Запуск бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
-
-
-
-
-    
