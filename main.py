@@ -75,10 +75,11 @@ async def descr_func(message: types.Message):
                            reply_markup=kb_instruct)
 
 
+
 # Хендлер Покупки подписки
 @dp.message_handler(Text(equals="Оформить подписку"))
 async def buy(message: types.Message):
-    if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
+    if (PAYMENTS_TOKEN:=os.getenv('PAYMENTS_TOKEN')).split(":")[1] == "TEST":
         await bot.send_message(message.chat.id,
                                "Тестовый платеж")
     await bot.send_invoice(message.chat.id,
@@ -292,10 +293,3 @@ async def unknown_func(message: types.Message):
 # Запуск бота
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
-
-
-
-
-
-
-### for test git
