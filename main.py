@@ -3,6 +3,9 @@ from data.imports import *
 bot = Bot(TG_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+decrypted_key = b""
+decrypted_secret = b""
+
 
 # Дата конца подписки
 def next_month(today):
@@ -29,11 +32,11 @@ async def start_func(message: types.Message):
     info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
     # Если нет в бд
     if info is None:
-        cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '');""")
+        cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '', '');""")
         conn.commit()
     # Если есть в бд
     else:
-        cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+        cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
         result = cursor.fetchone()
         # Если статус бесплатный
         if result[0] == "free":
@@ -42,9 +45,7 @@ async def start_func(message: types.Message):
                                    reply_markup=kb_free)
         # Если статус платный
         elif result[0] == "paid":
-            cursor.execute("SELECT api_secret FROM users WHERE user_id = ?", (message.from_user.id,))
-            profile = cursor.fetchone()
-            if profile[0] is None:
+            if result[1] == "":
                 await bot.send_message(chat_id=message.from_user.id,
                                        text="Мы нашли вашу учетную запись в базе данных.",
                                        reply_markup=kb_unreg)
@@ -131,18 +132,23 @@ async def successfull_payment(message: types.Message):
 async def menu_func(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+    cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
     result = cursor.fetchone()
     if result[0] == "free":
         await bot.send_message(chat_id=message.from_user.id,
                                text="Вы вернулись в меню🦩",
                                parse_mode="HTML",
                                reply_markup=kb_free)
-    else:
+    elif result[0] == "paid" and result[1] != "":
         await bot.send_message(chat_id=message.from_user.id,
                                text="Вы вернулись в меню🦩",
                                parse_mode="HTML",
                                reply_markup=kb_reg)
+    elif result[0] == "paid" and result[1] == "":
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в меню🦩",
+                               parse_mode="HTML",
+                               reply_markup=kb_unreg)
 
 
 # Хендлер Предостережения
@@ -199,13 +205,28 @@ async def set_api_secret(message: types.Message, state: FSMContext):
         await state.finish()
     s = await state.get_data()
     try:
-        test_conn = spot.HTTP(endpoint="https://api.bybit.com", api_key=s.get("api_key"), api_secret=s.get("api_secret"))
-        test_conn.get_wallet_balance()
+        test = HTTP(
+            api_key=s.get("api_key"),
+            api_secret=s.get("api_secret"),
+        )
+        test.get_account_info()
+
+        # Шифровка ключей
+        cipher_key = Fernet.generate_key()
+        cipher = Fernet(cipher_key)
+        api_key = s.get("api_key").encode("utf-8")
+        api_secret = s.get("api_secret").encode("utf-8")
+        encrypted_key = cipher.encrypt(api_key)
+        encrypted_secret = cipher.encrypt(api_secret)
+        global decrypted_key
+        decrypted_key = cipher.decrypt(encrypted_key)
+        global decrypted_secret
+        decrypted_secret = cipher.decrypt(encrypted_secret)
 
         # Запись Данных в бд
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
-        cursor.execute(f"""UPDATE users SET api_secret = "{s.get("api_secret")}", api_key = "{s.get("api_key")}"
+        cursor.execute(f"""UPDATE users SET api_secret = "{encrypted_key}", api_key = "{encrypted_secret}"
                                WHERE user_id = {message.from_user.id}""")
         conn.commit()
         cursor.close()
@@ -214,6 +235,7 @@ async def set_api_secret(message: types.Message, state: FSMContext):
 
     except exceptions.InvalidRequestError as e:
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
+        print(e)
 
 
 # Проверка на полную регистрацию
@@ -239,28 +261,23 @@ async def balance_func(message: types.Message):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
+        session = HTTP(
+            api_key=decrypted_key.decode('utf-8'),
+            api_secret=decrypted_secret.decode('utf-8')
+        )
+        
+        wallet_balance_data = session.get_wallet_balance(accountType="UNIFIED")["result"]["list"][0]
+        coins = wallet_balance_data["coin"]
+        total_balance = wallet_balance_data["totalEquity"]
+        total_balance_msg = ""
 
-        session = spot.HTTP(endpoint="https://api.bybit.com", api_key=data[1], api_secret=data[0])
-        session1 = HTTP(endpoint="https://api.bybit.com", api_key=data[1], api_secret=data[0])
-        balance = session1.get_wallet_balance()["result"]["USDT"]['available_balance']
-        info = session.get_wallet_balance()["result"]["balances"]
-        if len(info) != 0 and int(balance) != 0:
-            coins_list = session.get_last_traded_price()["result"]["list"]
-            total = 0
-            text = ""
-            for obj in info:
-                for coin in coins_list:
-                    if coin["symbol"] == f"{obj['coin']}USDT":
-                        text += f"<b>{obj['coin']}</b>: {str(float(coin['price']) * float(obj['total']))} $\n"
-                        total += float(coin["price"]) * float(obj["total"])
-            total += balance
-            text += f"<b>Стоимость всех активов</b>: {int(total * 100) / 100} $"
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text=text,
-                                   parse_mode="HTML")
-        else:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="На балансе нет средств")
+        for obj in coins:
+            total_balance_msg += f"<b>{obj['coin']}</b>: <b>{obj['equity']}</b>\n"
+
+        total_balance_msg += f"<b>Общий баланс: {total_balance}</b> $"
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=total_balance_msg,
+                               parse_mode="HTML")
 
 
 # Хендлер хуйни
