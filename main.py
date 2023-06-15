@@ -215,8 +215,7 @@ async def set_api_secret(message: types.Message, state: FSMContext):
         test.get_account_info()
 
         # Шифровка ключей
-        cipher_key = Fernet.generate_key()
-        cipher = Fernet(cipher_key)
+        cipher = Fernet(os.getenv('CIPHER_KEY'))
         api_key = s.get("api_key").encode("utf-8")
         api_secret = s.get("api_secret").encode("utf-8")
         encrypted_key = cipher.encrypt(api_key)
