@@ -78,7 +78,7 @@ async def descr_func(message: types.Message):
 # Хендлер Покупки подписки
 @dp.message_handler(Text(equals="Оформить подписку"))
 async def buy(message: types.Message):
-    if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
+    if (PAYMENTS_TOKEN:=os.getenv('PAYMENTS_TOKEN')).split(":")[1] == "TEST":
         await bot.send_message(message.chat.id,
                                "Тестовый платеж")
     await bot.send_invoice(message.chat.id,
