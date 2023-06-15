@@ -229,7 +229,7 @@ async def set_api_secret(message: types.Message, state: FSMContext):
         # Запись Данных в бд
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
-        cursor.execute(f"""UPDATE users SET api_secret = "{encrypted_key}", api_key = "{encrypted_secret}"
+        cursor.execute(f"""UPDATE users SET api_secret = "{encrypted_secret}", api_key = "{encrypted_key}"
                                WHERE user_id = {message.from_user.id}""")
         conn.commit()
         cursor.close()
@@ -297,4 +297,3 @@ if __name__ == "__main__":
 
 
 
-    
