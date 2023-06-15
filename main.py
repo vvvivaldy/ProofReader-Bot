@@ -5,8 +5,18 @@ load_dotenv()
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-decrypted_key = b""
-decrypted_secret = b""
+
+# Расшифровка
+def decrypt_api(api):
+    cipher = Fernet(os.getenv('CIPHER_KEY'))
+    return cipher.decrypt(api)
+
+
+# Шифровка
+def encrypt_api(api):
+    cipher = Fernet(os.getenv('CIPHER_KEY'))
+    return cipher.encrypt(api)
+
 
 
 # Дата конца подписки
