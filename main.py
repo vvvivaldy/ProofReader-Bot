@@ -75,6 +75,7 @@ async def descr_func(message: types.Message):
                            reply_markup=kb_instruct)
 
 
+
 # Хендлер Покупки подписки
 @dp.message_handler(Text(equals="Оформить подписку"))
 async def buy(message: types.Message):
