@@ -28,6 +28,6 @@ kb_profile.add(prof_b1).add(prof_b2)
 
 # Инлайн клавиатура инструкции
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)
-b_ins1 = "Как начать пользоваться ботом?"
+b_ins1 = "Как создать API ключ?"
 b_ins2 = "❌Предостережения❌"
 kb_instruct.add(b_ins1).add(b_ins2).add(prof_b2)
