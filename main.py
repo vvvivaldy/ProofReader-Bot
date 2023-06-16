@@ -34,7 +34,7 @@ async def on_startup(_):
 @dp.message_handler(commands=["start"])
 async def start_func(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
-                           text=f"Приветствую, {message.from_user.username}! ВСТАВИТЬ ВСТУПЛЕНИЕ. "
+                           text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете торговать теми же ордерами, что и профессиональные трейдеры на Bybit!. "
                                 f"Подробнее ты можешь узнать нажав  "
                                 f"на кнопку \"Описание\"",
                            reply_markup=kb_free)
@@ -73,7 +73,7 @@ async def start_func(message: types.Message):
 @dp.message_handler(Text(equals="Описание"))
 async def descr_func(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
-                           text=DESCR)
+                           text=DESCR, parse_mode="HTML")
 
 
 # Хендлер Инструкции
@@ -98,8 +98,7 @@ async def buy(message: types.Message):
                            provider_token=PAYMENTS_TOKEN,
                            currency="rub",
                            photo_url="https://i.postimg.cc/3RXYBqbV/kandinsky-download-1681585603018.png",
-                           photo_width=400,
-                           photo_height=300,
+                           photoбаo_height=300,
                            is_flexible=False,
                            prices=[PRICE],
                            start_parameter="one-month-subscription",
@@ -173,10 +172,10 @@ async def predostr_func(message: types.Message):
 
 
 # Хендлер Пользование ботом
-@dp.message_handler(Text(equals="Как начать пользоваться ботом?"))
+@dp.message_handler(Text(equals="Как создать API ключ?"))
 async def instruct_func(message: types.Message):
     await bot.send_video(chat_id=message.from_user.id,
-                         video=open("imgs/CHANGE_TO_INSTRUCTION.mp4", "rb"),
+                         video=open("imgs/instruct.mp4", "rb"),
                          caption="Подробная инструкция")
 
 
