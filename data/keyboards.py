@@ -26,8 +26,18 @@ prof_b1 = KeyboardButton("Баланс")
 prof_b2 = KeyboardButton("В меню")
 kb_profile.add(prof_b1).add(prof_b2)
 
-# Инлайн клавиатура инструкции
+# Клавиатура инструкции
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)
-b_ins1 = "Как создать API ключ?"
-b_ins2 = "❌Предостережения❌"
+b_ins1 = KeyboardButton("Как создать API ключ?")
+b_ins2 = KeyboardButton("❌Предостережения❌")
 kb_instruct.add(b_ins1).add(b_ins2).add(prof_b2)
+
+# Клавиатура админ панели
+kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)
+adb1 = KeyboardButton('Статистика')
+adb2 = KeyboardButton('Цены')
+adb3 = KeyboardButton('Черный список')
+adb4 = KeyboardButton('Вывод данных о клиенте')
+adb5 = KeyboardButton('Выдать статус')
+adb6 = KeyboardButton('Перешифровка')
+kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb5)
