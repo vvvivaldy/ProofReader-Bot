@@ -1,11 +1,5 @@
 from handlers.A_head_of_handlers import *
 
-load_dotenv()
-
-bot = Bot(os.getenv('TG_TOKEN'))
-dp = Dispatcher(bot, storage=MemoryStorage())
-
-
 
 # Хендлер старта
 @dp.message_handler(commands=["start"])
