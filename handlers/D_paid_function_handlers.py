@@ -62,6 +62,9 @@ async def profile_func(message: types.Message):
     info = api_stock(message.from_user.id)
     if info is not None:
         await message.answer(text="Выберите действие", reply_markup=kb_profile)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 
@@ -90,3 +93,6 @@ async def balance_func(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text=total_balance_msg,
                                parse_mode="HTML")
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
