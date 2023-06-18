@@ -21,9 +21,3 @@ PREDOSTR = """<b>•Ключи API, не привязанные к IP-адрес
 •После закрытия окна API будет недоступен. 
 •Сохраните ключ в безопасном месте. 
 •В целях безопасности, пожалуйста, не передавайте свой ключ непроверенным сторонним контактам.</b>"""
-
-PRICE1 = types.LabeledPrice(label="Подписка на неделю", amount=1000 * 100)
-PRICE2 = types.LabeledPrice(label="Подписка на месяц", amount=10000 * 2)
-PRICE3 = types.LabeledPrice(label="Подписка на 3 месяца", amount=10000 * 3)
-PRICE4 = types.LabeledPrice(label="Подписка на 6 месяцев", amount=10000 * 4)
-PRICE5 = types.LabeledPrice(label="Подписка на 1 год", amount=10000 * 7)
