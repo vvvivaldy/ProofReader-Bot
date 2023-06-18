@@ -1,5 +1,11 @@
 from handlers.C_admin_panel_handlers  import *
 
+# Проверка на полную регистрацию
+def api_stock(a):
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    return cursor.execute('SELECT api_secret FROM users WHERE user_id=?;', (a,)).fetchone()
+
 
 # Хендлер Авторизации
 @dp.message_handler(Text(equals="Авторизация"))
@@ -47,14 +53,6 @@ async def set_api(message: types.Message, state: FSMContext):
     conn.commit()
     cursor.close()
     await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
-
-
-
-# Проверка на полную регистрацию
-def api_stock(a):
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
-    return cursor.execute('SELECT api_secret FROM users WHERE user_id=?;', (a,)).fetchone()
 
 
 
