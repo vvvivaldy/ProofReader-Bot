@@ -5,7 +5,7 @@ from handlers.A_head_of_handlers import *
 @dp.message_handler(commands=["start"])
 async def start_func(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
-                           text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете торговать теми же ордерами, что и профессиональные трейдеры на Bybit!. "
+                           text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
                                 f"Подробнее ты можешь узнать нажав  "
                                 f"на кнопку \"Описание\"",
                            reply_markup=kb_free)
