@@ -23,6 +23,9 @@ async def statistics_for_admin(message: types.Message):
         await bot.send_photo(chat_id=message.from_user.id,
                              photo='https://avatars.mds.yandex.net/i?id=a3fee7ff2c0b3d36240e784b54605fa23e815401-9284609-images-thumbs&n=13',
                              reply_markup=ikas)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 
