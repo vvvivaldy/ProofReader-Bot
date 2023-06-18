@@ -1,7 +1,7 @@
 from handlers.F_tail_of_handlers import *
 
 
-# Успещный запуск бота
+# Успешный запуск бота
 async def on_startup(_):
     print("Я был запущен")
 

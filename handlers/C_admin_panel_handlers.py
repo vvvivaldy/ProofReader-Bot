@@ -14,7 +14,7 @@ async def admin_validate(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
 @dp.message_handler(Text(equals='Статистика'))
-async def _(message: types.Message):
+async def stat(message: types.Message):
     pass
 
 

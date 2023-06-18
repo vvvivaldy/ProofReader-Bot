@@ -29,6 +29,7 @@ async def db_validate(cursor, conn, message, info=None):
     # Если нет в бд
     if info is None:
         cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '', '');""")
+        cursor.execute("UPDATE counter SET count_users_all_time = count_users_all_time + 1 WHERE user_id = ?", (message.from_user.id))
         conn.commit()
     # Если есть в бд
     else:
