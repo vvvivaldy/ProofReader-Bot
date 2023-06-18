@@ -49,7 +49,7 @@ async def buy(message: types.Message):
                            provider_token=PAYMENTS_TOKEN,
                            currency="rub",
                            photo_url="https://i.postimg.cc/3RXYBqbV/kandinsky-download-1681585603018.png",
-                           photoбаo_height=300,
+                           photo_height=300,
                            is_flexible=False,
                            prices=[PRICE],
                            start_parameter="one-month-subscription",
