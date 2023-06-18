@@ -13,31 +13,31 @@ async def admin_validate(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
-@dp.message_handler(Text(equals=''))
+@dp.message_handler(Text(equals='Статистика'))
 async def _(message: types.Message):
     pass
 
 
-@dp.message_handler(Text(equals=''))
+@dp.message_handler(Text(equals='Цены'))
 async def _(message: types.Message):
     pass
 
 
-@dp.message_handler(Text(equals=''))
+@dp.message_handler(Text(equals='Черный список'))
 async def _(message: types.Message):
     pass
 
 
-@dp.message_handler(Text(equals=''))
+@dp.message_handler(Text(equals='Вывод данных о клиенте'))
 async def _(message: types.Message):
     pass
 
 
-@dp.message_handler(Text(equals=''))
+@dp.message_handler(Text(equals='Выдать статус'))
 async def _(message: types.Message):
     pass
 
 
-@dp.message_handler(Text(equals=''))
+@dp.message_handler(Text(equals='Перешифровка'))
 async def _(message: types.Message):
     pass
