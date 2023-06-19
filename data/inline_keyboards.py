@@ -30,3 +30,8 @@ inl_kb_pr = InlineKeyboardMarkup(row_width=2)
 ikp1 = InlineKeyboardButton(text='Назад', callback_data='Creturn')
 ikp2 = InlineKeyboardButton(text='Изменить', callback_data='Cedit')
 inl_kb_pr.add(ikp1,ikp2)
+
+inl_kb_status = InlineKeyboardMarkup(row_width=2)
+ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='Trader')
+ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='User')
+inl_kb_status.add(ikbtn1, ikbtn2)

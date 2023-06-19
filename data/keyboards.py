@@ -42,3 +42,9 @@ adb5 = KeyboardButton('Выдать статус')
 adb6 = KeyboardButton('Перешифровка')
 kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb6)
 
+# Клавиатура черного списка
+kb_black_list = ReplyKeyboardMarkup(resize_keyboard=True)
+bl_btn1 = KeyboardButton('Посмотреть заблокированных')
+bl_btn2 = KeyboardButton('Добавить в чс')
+bl_btn3 = KeyboardButton('Удалить из чс')
+kb_black_list.add(bl_btn1).add(bl_btn2, bl_btn3)
