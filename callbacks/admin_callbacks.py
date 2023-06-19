@@ -1,6 +1,6 @@
 from handlers.A_head_of_handlers import *
 
-@dp.callback_query_handler(lambda c: c.data[0] == 'A')
+@dp.callback_query_handler(lambda c: c.data[0] == 'C')
 async def admin_callbacks(callback: types.CallbackQuery):
     callback.data = callback.data[1:]
     match callback.data:

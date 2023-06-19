@@ -1,7 +1,7 @@
 from handlers.A_head_of_handlers import *
 
 
-@dp.callback_query_handler(lambda c: c.data[0] == 'P')
+@dp.callback_query_handler(lambda c: c.data[0] == 'B')
 async def pay(callback: types.CallbackQuery):
     callback.data = callback.data[1:]
     with open("db/prices.csv", encoding='utf-8') as r_file:
