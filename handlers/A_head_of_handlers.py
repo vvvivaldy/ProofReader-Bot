@@ -4,7 +4,7 @@ load_dotenv()
 
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
-
+admin_ids = [os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID')]
 
 # Расшифровка
 def decrypt_api(api):
@@ -16,6 +16,12 @@ def decrypt_api(api):
 def encrypt_api(api):
     cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
     return cipher.encrypt(bytes(api,encoding='utf-8'))
+
+
+# Проверка на админа
+async def admin_validate(message: types.Message):
+    if str(message.from_user.id) in admin_ids: return True
+    return False
 
 
 # Дата конца подписки

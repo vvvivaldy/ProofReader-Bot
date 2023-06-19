@@ -40,5 +40,5 @@ adb3 = KeyboardButton('Черный список')
 adb4 = KeyboardButton('Вывод данных о клиенте')
 adb5 = KeyboardButton('Выдать статус')
 adb6 = KeyboardButton('Перешифровка')
-kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb5)
+kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb6)
 

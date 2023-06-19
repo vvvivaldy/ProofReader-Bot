@@ -7,7 +7,7 @@ from aiogram.dispatcher import FSMContext
 
 from data.config import DESCR, INSTRUCT, PREDOSTR
 from data.keyboards import kb_free, kb_instruct, kb_reg, kb_unreg, kb_profile, kb_admin
-from data.inline_keyboards import ikas, paykb
+from data.inline_keyboards import ikas, paykb, inl_kb_pr
 from data.classes import Auth
 
 

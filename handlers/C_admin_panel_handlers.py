@@ -1,11 +1,7 @@
 from handlers.B_basic_function_handlers import *
 from callbacks.admin_callbacks import *
 
-admin_ids = [os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID')]
 
-async def admin_validate(message: types.Message):
-    if str(message.from_user.id) in admin_ids: return True
-    return False
 
 @dp.message_handler(commands=['ADMINPANEL'])
 async def admin_check(message: types.Message):
@@ -30,8 +26,26 @@ async def statistics_for_admin(message: types.Message):
 
 
 @dp.message_handler(Text(equals='Цены'))
-async def _(message: types.Message):
-    pass
+async def set_price(message: types.Message):
+    if await admin_validate(message):
+        await message.delete()
+        with open("db/prices.csv", encoding='utf-8') as r_file:
+            file_reader = csv.reader(r_file, delimiter = ";")
+            for row in file_reader:
+                PRICES = [i for i in row]
+                PRICES = f'''1 неделя: {PRICES[0]}
+1 месяц: {PRICES[1]}
+3 месяца: {PRICES[2]}
+6 месяцев: {PRICES[3]}
+1 год: {PRICES[4]}'''
+                break
+        
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=str(PRICES),
+                               reply_markup=inl_kb_pr)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.") 
 
 
 @dp.message_handler(Text(equals='Черный список'))
@@ -52,3 +66,21 @@ async def _(message: types.Message):
 @dp.message_handler(Text(equals='Перешифровка'))
 async def _(message: types.Message):
     pass
+
+
+@dp.message_handler(lambda m: all([i.isdigit() for i in m.text.split()]))
+async def edit_price(message: types.Message):
+    if await admin_validate(message):
+        if all([i.isdigit for i in message.text.split()]) and len(list(message.text.split())) == 5 and all([int(i)>9 for i in message.text.split()]):
+            new_prices = list(message.text.split())
+            with open('db/prices.csv',mode = 'w', encoding='utf-8') as data:
+                file_writer = csv.writer(data, delimiter=';',lineterminator='\r')
+                file_writer.writerow(new_prices)
+            await message.answer(text='Цены успешно изменены',
+                                reply_markup=kb_admin)
+        else:
+            await message.answer(text='Введены неверные значения',
+                                                reply_markup=inl_kb_pr)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.") 
