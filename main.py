@@ -5,7 +5,6 @@ from handlers.F_tail_of_handlers import *
 async def on_startup(_):
     print("Я был запущен")
 
-    
 
 # Запуск бота
 if __name__ == "__main__":
