@@ -1,15 +1,21 @@
 from data.imports import *
 
-load_dotenv()
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file)
 
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 admin_ids = [os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID')]
 
 # Расшифровка
-def decrypt_api(api):
-    cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
-    return cipher.decrypt(api).decode('utf-8')
+def decrypt_api(api, key=None):
+    if key == None:
+        cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
+    else:
+        cipher = Fernet(bytes(key+'=',encoding='utf-8'))
+    if type(api) == bytes:
+        return cipher.decrypt(api).decode('utf-8')
+    return cipher.decrypt(bytes(api[2:-1],encoding='utf-8')).decode('utf-8')
 
 
 # Шифровка
