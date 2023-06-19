@@ -47,10 +47,47 @@ async def set_price(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.") 
 
-
+# Черный список
 @dp.message_handler(Text(equals='Черный список'))
-async def _(message: types.Message):
-    pass
+async def black_list(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Выберите действие",
+                               reply_markup=kb_black_list)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Посмотреть заблокированных'))
+async def check_bl(message: types.Message):
+    if await admin_validate(message):
+        conn = sqlite3.connect('db/database.db')
+        cursor = conn.cursor()
+        users = cursor.execute('SELECT * FROM black_list').fetchall()
+        text = """
+    """
+        for obj in users:
+            text += f"{users.index(obj) + 1}. <b>{obj[0]}</b>, <b>{obj[1]}</b>\n"
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=text,
+                               parse_mode="HTML",
+                               reply_markup=kb_black_list)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Добавить в чс'))
+async def check_bl(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Выберете статус пользователя.",
+                               reply_markup=inl_kb_status)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
 
 
 @dp.message_handler(Text(equals='Вывод данных о клиенте'))

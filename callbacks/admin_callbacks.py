@@ -23,6 +23,53 @@ async def admin_callbacks(callback: types.CallbackQuery):
                                              '1 года')
         case 'return':
             await bot.send_message(chat_id=callback.from_user.id,
-                               text='Вернулись назад',
-                               reply_markup=kb_admin)
+                                   text='Вернулись назад',
+                                   reply_markup=kb_admin)
             await callback.message.delete()
+
+
+@dp.callback_query_handler(text="Trader")
+async def trader_callbacks(callback: types.CallbackQuery):
+    await callback.message.answer(text="Введите id трейдера")
+    await Bl_Id_Trader.id.set()
+
+
+@dp.callback_query_handler(text="User")
+async def trader_callbacks(callback: types.CallbackQuery):
+    await callback.message.answer(text="Введите id юзера")
+    await Bl_Id_User.id.set()
+
+
+@dp.message_handler(state=Bl_Id_Trader.id)
+async def set_api(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['id'] = message.text
+        await state.finish()
+    s = await state.get_data()
+    trader_id = s['id']
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
+    conn.commit()
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Пользователь успешно заблокирован',
+                           reply_markup=kb_black_list)
+
+
+@dp.message_handler(state=Bl_Id_User.id)
+async def set_api(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['id'] = message.text
+        await state.finish()
+    s = await state.get_data()
+    print(s)
+    trader_id = s['id']
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
+    conn.commit()
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Пользователь успешно заблокирован',
+                           reply_markup=kb_black_list)
+
+
