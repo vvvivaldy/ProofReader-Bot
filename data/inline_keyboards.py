@@ -20,11 +20,6 @@ ibas2 = InlineKeyboardButton(text='NEW users and Traders',callback_data= 'Cnew')
 ibas3 = InlineKeyboardButton(text='transactions',callback_data= 'Ctrans')
 ikas.add(ibas1,ibas2,ibas3)
 
-# для ibas1
-
-
-# для ibas3
-
 #ЦЕНЫ
 inl_kb_pr = InlineKeyboardMarkup(row_width=2)
 ikp1 = InlineKeyboardButton(text='Назад', callback_data='Creturn')
