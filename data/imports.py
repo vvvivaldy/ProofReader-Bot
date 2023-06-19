@@ -16,7 +16,8 @@ import sqlite3
 import csv
 from datetime import date, timedelta
 from cryptography.fernet import Fernet
+from cryptography.fernet import InvalidToken
 from pybit.unified_trading import HTTP
 from pybit import exceptions
-from dotenv import load_dotenv
+import dotenv
 import os
