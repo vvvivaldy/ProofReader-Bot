@@ -1,5 +1,5 @@
 from handlers.A_head_of_handlers import *
-
+from callbacks.basic_callbacks import *
 
 # Хендлер старта
 @dp.message_handler(commands=["start"])
@@ -40,39 +40,12 @@ async def descr_func(message: types.Message):
 # Хендлер Покупки подписки
 @dp.message_handler(Text(equals="Оформить подписку"))
 async def buy(message: types.Message):
-    if (PAYMENTS_TOKEN:=os.getenv('PAYMENTS_TOKEN')).split(":")[1] == "TEST":
-        await bot.send_message(message.chat.id,
-                               "Тестовый платеж", reply_markup=paykb)
+    if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
+        await bot.send_photo(message.chat.id,
+                             photo='https://i.postimg.cc/zBynYjZq/photo-2023-06-18-16-59-44.jpg',
+                             caption="Тестовый платеж",
+                             reply_markup=paykb)
     
-@dp.callback_query_handler()
-async def pay(callback: types.CallbackQuery):
-    with open("data/prices.csv", encoding='utf-8') as r_file:
-        file_reader = csv.reader(r_file, delimiter = ";")
-        for row in file_reader:
-            PRICES = [int(i) for i in row]
-            print(PRICES)
-    if callback.data == '1 неделю':
-        PRICE = PRICES[0]
-    elif callback.data == '1 месяц':
-        PRICE = PRICES[1]
-    elif callback.data == '3 месяца':
-        PRICE = PRICES[2]
-    elif callback.data == '6 месяцев':
-        PRICE = PRICES[3]
-    elif callback.data == '1 год':
-        PRICE = PRICES[4]
-    if (PAYMENTS_TOKEN:=os.getenv('PAYMENTS_TOKEN')).split(":")[1] == "TEST":
-        await bot.send_invoice(callback.from_user.id,
-                           title="Подписка на ProofReader",
-                           description=f"Активация подписки на {callback.data}",
-                           provider_token=PAYMENTS_TOKEN,
-                           currency="rub",
-                           photo_url="https://i.postimg.cc/zBynYjZq/photo-2023-06-18-16-59-44.jpg",
-                           photo_height=200,
-                           is_flexible=False,
-                           prices=[types.LabeledPrice(label=f"Подписка на {callback.data}", amount=PRICE * 100)],
-                           start_parameter="ProofReader-subscription",
-                           payload="tesy-invoice-payload")
 
 @dp.pre_checkout_query_handler(lambda query: True)
 async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
