@@ -35,3 +35,8 @@ inl_kb_status = InlineKeyboardMarkup(row_width=2)
 ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='Trader')
 ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='User')
 inl_kb_status.add(ikbtn1, ikbtn2)
+
+inl_kb_status2 = InlineKeyboardMarkup(row_width=2)
+ikbtn3 = InlineKeyboardButton(text='Трейдер', callback_data='Trader_del')
+ikbtn4 = InlineKeyboardButton(text='Юзер', callback_data='User_del')
+inl_kb_status2.add(ikbtn3, ikbtn4)

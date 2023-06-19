@@ -8,5 +8,10 @@ class Auth(StatesGroup):
 class Bl_Id_Trader(StatesGroup):
     id = State()
 
+
 class Bl_Id_User(StatesGroup):
+    id = State()
+
+
+class UserDel(StatesGroup):
     id = State()

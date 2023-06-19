@@ -28,6 +28,7 @@ async def admin_callbacks(callback: types.CallbackQuery):
             await callback.message.delete()
 
 
+# Добавление
 @dp.callback_query_handler(text="Trader")
 async def trader_callbacks(callback: types.CallbackQuery):
     await callback.message.answer(text="Введите id трейдера")
@@ -35,13 +36,13 @@ async def trader_callbacks(callback: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text="User")
-async def trader_callbacks(callback: types.CallbackQuery):
+async def user_callbacks(callback: types.CallbackQuery):
     await callback.message.answer(text="Введите id юзера")
     await Bl_Id_User.id.set()
 
 
 @dp.message_handler(state=Bl_Id_Trader.id)
-async def set_api(message: types.Message, state: FSMContext):
+async def add_trader(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['id'] = message.text
         await state.finish()
@@ -57,12 +58,11 @@ async def set_api(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=Bl_Id_User.id)
-async def set_api(message: types.Message, state: FSMContext):
+async def add_user(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['id'] = message.text
         await state.finish()
     s = await state.get_data()
-    print(s)
     trader_id = s['id']
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
@@ -73,3 +73,24 @@ async def set_api(message: types.Message, state: FSMContext):
                            reply_markup=kb_black_list)
 
 
+# Удаление
+@dp.message_handler(state=UserDel.id)
+async def set_api(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['id'] = message.text
+        await state.finish()
+    s = await state.get_data()
+    user_id = s['id']
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    info = cursor.execute(f"""SELECT * FROM black_list WHERE id={user_id};""").fetchone()
+    if info is not None:
+        cursor.execute(f"""DELETE FROM black_list WHERE id={user_id};""")
+        conn.commit()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Пользователь успешно удален из чс.',
+                               reply_markup=kb_black_list)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Пользователь не найден в чс.',
+                               reply_markup=kb_black_list)
