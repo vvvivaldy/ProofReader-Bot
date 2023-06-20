@@ -85,28 +85,31 @@ async def successfull_payment(message: types.Message):
         day = min(sourcedate.day, calendar.monthrange(year,month)[1])
         return date(year, month, day)
     with open('db/prices.csv',encoding='utf-8') as data:
-        prices = csv.reader(data,delimiter=';')
-        if message.successful_payment.total_amount // 100 == prices[0]:
-            date1 = "week"
-            date_fininsh = date_start + timedelta(days=7)
-        elif message.successful_payment.total_amount // 100 == prices[1]:
-            date1 = "month"
-            days = calendar.monthrange(date_start.year, date_start.month)[1]
-            date_fininsh = date_start + timedelta(days=days)
-        elif message.successful_payment.total_amount // 100 == prices[2]:
-            date1 = "3_month"
-            date_fininsh = add_months(date_start, 3)
-        elif message.successful_payment.total_amount // 100 == prices[3]:
-            date1 = "6_month"
-            date_fininsh = add_months(date_start, 6)
-        elif message.successful_payment.total_amount // 100 == prices[4]:
-            date1 = "year"
-            date_fininsh = str(add_months(date_start, 12))
+        read_file = csv.reader(data,delimiter=';')
+        for i in read_file:
+            prices = list(map(int,i))
+    if message.successful_payment.total_amount // 100 == prices[0]:
+        date1 = "week"
+        date_fininsh = date_start + timedelta(days=7)
+    elif message.successful_payment.total_amount // 100 == prices[1]:
+        date1 = "month"
+        days = calendar.monthrange(date_start.year, date_start.month)[1]
+        date_fininsh = date_start + timedelta(days=days)
+    elif message.successful_payment.total_amount // 100 == prices[2]:
+        date1 = "3_month"
+        date_fininsh = add_months(date_start, 3)
+    elif message.successful_payment.total_amount // 100 == prices[3]:
+        date1 = "6_month"
+        date_fininsh = add_months(date_start, 6)
+    elif message.successful_payment.total_amount // 100 == prices[4]:
+        date1 = "year"
+        date_fininsh = str(add_months(date_start, 12))
     cursor.execute(f"""UPDATE users SET subscriptions = "{date1}" WHERE user_id = {message.from_user.id}""")
     cursor.execute(f"""INSERT or REPLACE into purchase_history VALUES ('{date_start}', '{current_time}', '{message.from_user.id}', '{date1}', '{message.successful_payment.total_amount // 100}', '{tranzaktion}')""")
     cursor.execute(f"""Update users set status = "paid", subscribe_start = "{date_start}", 
-                       subscribe_finish = "{date_fininsh}" 
-                       where user_id = {message.from_user.id}""")
+                       subscribe_finish = "{date_fininsh}", 
+                       [transaction] = "{tranzaktion}" 
+                       where user_id = {message.from_user.id};""")
 
     conn.commit()
     cursor.close()
