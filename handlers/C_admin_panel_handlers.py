@@ -65,14 +65,18 @@ async def check_bl(message: types.Message):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
         users = cursor.execute('SELECT * FROM black_list').fetchall()
-        text = """
-    """
+        text = """"""
         for obj in users:
             text += f"{users.index(obj) + 1}. <b>{obj[0]}</b>, <b>{obj[1]}</b>\n"
-        await bot.send_message(chat_id=message.from_user.id,
-                               text=text,
-                               parse_mode="HTML",
-                               reply_markup=kb_black_list)
+        if text != "":
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text=text,
+                                   parse_mode="HTML",
+                                   reply_markup=kb_black_list)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Черный список пуст.",
+                                   reply_markup=kb_black_list)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
@@ -88,6 +92,17 @@ async def check_bl(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
+
+@dp.message_handler(Text(equals='Удалить из чс'))
+async def check_bl(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Введите id пользователя")
+        await UserDel.id.set()
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 @dp.message_handler(Text(equals='Вывод данных о клиенте'))
