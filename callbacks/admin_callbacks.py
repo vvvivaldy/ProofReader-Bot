@@ -57,8 +57,8 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             await Bl_Id_Trader.id.set()
 
         case 'User':
-                await callback.message.answer(text="Введите id юзера")
-                await Bl_Id_User.id.set()
+            await callback.message.answer(text="Введите id юзера")
+            await Bl_Id_User.id.set()
 
 
 
