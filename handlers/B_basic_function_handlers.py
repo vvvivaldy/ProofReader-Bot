@@ -84,56 +84,30 @@ async def successfull_payment(message: types.Message):
         month = month % 12 + 1
         day = min(sourcedate.day, calendar.monthrange(year,month)[1])
         return date(year, month, day)
-    if message.successful_payment.total_amount // 100 == 1490:
-        date1 = "week"
-        date_fininsh = date_start + timedelta(days=7)
-    elif message.successful_payment.total_amount // 100 == 4490:
-        date1 = "month"
-        days = calendar.monthrange(date_start.year, date_start.month)[1]
-        date_fininsh = date_start + timedelta(days=days)
-    elif message.successful_payment.total_amount // 100 == 9990:
-        date1 = "3_month"
-        date_fininsh = add_months(date_start, 3)
-    elif message.successful_payment.total_amount // 100 == 14990:
-        date1 = "6_month"
-        date_fininsh = add_months(date_start, 6)
-    elif message.successful_payment.total_amount // 100 == 24990:
-        date1 = "year"
-        date_fininsh = str(add_months(date_start, 12))
+    with open('db/prices.csv',encoding='utf-8') as data:
+        prices = csv.reader(data,delimiter=';')
+        if message.successful_payment.total_amount // 100 == prices[0]:
+            date1 = "week"
+            date_fininsh = date_start + timedelta(days=7)
+        elif message.successful_payment.total_amount // 100 == prices[1]:
+            date1 = "month"
+            days = calendar.monthrange(date_start.year, date_start.month)[1]
+            date_fininsh = date_start + timedelta(days=days)
+        elif message.successful_payment.total_amount // 100 == prices[2]:
+            date1 = "3_month"
+            date_fininsh = add_months(date_start, 3)
+        elif message.successful_payment.total_amount // 100 == prices[3]:
+            date1 = "6_month"
+            date_fininsh = add_months(date_start, 6)
+        elif message.successful_payment.total_amount // 100 == prices[4]:
+            date1 = "year"
+            date_fininsh = str(add_months(date_start, 12))
     cursor.execute(f"""UPDATE users SET subscriptions = "{date1}" WHERE user_id = {message.from_user.id}""")
     cursor.execute(f"""INSERT or REPLACE into purchase_history VALUES ('{date_start}', '{current_time}', '{message.from_user.id}', '{date1}', '{message.successful_payment.total_amount // 100}', '{tranzaktion}')""")
     cursor.execute(f"""Update users set status = "paid", subscribe_start = "{date_start}", 
                        subscribe_finish = "{date_fininsh}" 
                        where user_id = {message.from_user.id}""")
-    
-    
-    
-    '''if message.successful_payment.total_amount // 100 == 1490:
-        cursor.execute("UPDATE counter SET count_subs_week = count_subs_week + 1")
-        week = "week"
-        cursor.execute(f"""UPDATE users SET subscriptions = "{week}" WHERE user_id = {message.from_user.id}""")
-        cursor.execute(f"""Update users set status = "paid", subscribe_start = "{date.today()}", 
-                       subscribe_finish = "{date.today() + timedelta(days=7)}" 
-                       where user_id = {message.from_user.id}""")
-    elif message.successful_payment.total_amount // 100 == 4490:
-        cursor.execute("UPDATE counter SET count_subs_month = count_subs_month + 1")
-        month = "month"
-        cursor.execute(f"""UPDATE users SET subscriptions = "{month}" WHERE user_id = {message.from_user.id}""")
-        cursor.execute(f"""Update users set status = "paid", subscribe_start = "{date.today()}", 
-                       subscribe_finish = "{next_month(date.today())}" 
-                       where user_id = {message.from_user.id}""")
-    elif message.successful_payment.total_amount // 100 == 9990:
-        cursor.execute("UPDATE counter SET count_subs_3_month = count_subs_3_month + 1")
-        month_3 = "3_month"
-        cursor.execute(f"""UPDATE users SET subscriptions = "{month_3}" WHERE user_id = {message.from_user.id}""")
-    elif message.successful_payment.total_amount // 100 == 14990:
-        cursor.execute("UPDATE counter SET count_subs_6_month = count_subs_6_month + 1")
-        month_6 = "6_month"
-        cursor.execute(f"""UPDATE users SET subscriptions = "{month_6}" WHERE user_id = {message.from_user.id}""")
-    elif message.successful_payment.total_amount // 100 == 24990:
-        cursor.execute("UPDATE counter SET count_subs_1_year = count_subs_1_year + 1")
-        year = "year"
-        cursor.execute(f"""UPDATE users SET subscriptions = "{year}" WHERE user_id = {message.from_user.id}""")'''
+
     conn.commit()
     cursor.close()
 
