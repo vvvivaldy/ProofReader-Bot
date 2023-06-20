@@ -45,24 +45,21 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                                              '3 месяцев\n'
                                              '6 месяцев\n'
                                              '1 года')
+            
         case 'return':
             await bot.send_message(chat_id=callback.from_user.id,
                                    text='Вернулись назад',
                                    reply_markup=kb_admin)
             await callback.message.delete()
 
+        case 'Trader':
+            await callback.message.answer(text="Введите id трейдера")
+            await Bl_Id_Trader.id.set()
 
-# Добавление
-@dp.callback_query_handler(text="Trader")
-async def trader_callbacks(callback: types.CallbackQuery):
-    await callback.message.answer(text="Введите id трейдера")
-    await Bl_Id_Trader.id.set()
+        case 'User':
+                await callback.message.answer(text="Введите id юзера")
+                await Bl_Id_User.id.set()
 
-
-@dp.callback_query_handler(text="User")
-async def user_callbacks(callback: types.CallbackQuery):
-    await callback.message.answer(text="Введите id юзера")
-    await Bl_Id_User.id.set()
 
 
 @dp.message_handler(state=Bl_Id_Trader.id)
