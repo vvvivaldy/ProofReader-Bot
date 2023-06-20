@@ -142,9 +142,10 @@ async def re_encrypt_api(message: types.Message):
                          text='База данных пуста')
 
 
-@dp.message_handler(lambda m: all([i.isdigit() for i in m.text.split()]))
+@dp.message_handler(lambda m: all([i.isdigit() for i in m.text[1:].split()]) and m.text[0] == '!')
 async def edit_price(message: types.Message):
     if await admin_validate(message):
+        message.text = message.text[1:]
         if all([i.isdigit for i in message.text.split()]) and len(list(message.text.split())) == 5 and all([int(i)>9 for i in message.text.split()]):
             new_prices = list(message.text.split())
             with open('db/prices.csv',mode = 'w', encoding='utf-8') as data:

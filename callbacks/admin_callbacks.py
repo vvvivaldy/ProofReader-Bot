@@ -39,7 +39,7 @@ async def admin_callbacks(callback: types.CallbackQuery,):
 
         case 'edit':
             await callback.message.answer(text=
-                                             'Следующим сообщением введите через ПРОБЕЛ цены для\n'
+                                             'Следующим сообщением введите первый символ "!" и через ПРОБЕЛ цены для\n'
                                              '1 недели\n'
                                              '1 месяца\n'
                                              '3 месяцев\n'
