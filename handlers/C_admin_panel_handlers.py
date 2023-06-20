@@ -106,8 +106,9 @@ async def check_bl(message: types.Message):
 
 
 @dp.message_handler(Text(equals='Вывод данных о клиенте'))
-async def _(message: types.Message):
-    pass
+async def client_status(message: types.Message):
+    await message.answer(text='Кого выбираем?',
+                         reply_markup=ikk)
 
 
 @dp.message_handler(Text(equals='Выдать статус'))

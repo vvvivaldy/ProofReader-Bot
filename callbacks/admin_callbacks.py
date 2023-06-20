@@ -29,13 +29,15 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             cursor = conn.cursor()
             cursor.execute("SELECT date, user_id, amount, transaction FROM purchase_history")
             result = cursor.fetchall()
+            text2 = ''
             for i in range(len(result)):
                 date2 = result[i][0]
                 user_id2 = result[i][1]
                 amount2 = result[i][2]
                 tranzaktion = result[i][3]
-                text2 = f'<b>Дата:</b> {date2}\n<b>Айди:</b> {user_id2}\n<b>Количество:</b> {amount2}\n<b>Номер транзакции:</b> {tranzaktion}\n\n\n'
-                await bot.send_message(chat_id=callback.from_user.id, text=text2, parse_mode="HTML")
+                text2 += f'<b>Дата:</b> {date2}\n<b>Айди:</b> {user_id2}\n<b>Количество:</b> {amount2}\n<b>Номер транзакции:</b> {tranzaktion}\n\n\n'
+            await bot.send_message(chat_id=callback.from_user.id, text=text2, parse_mode="HTML")
+            cursor.close()
 
         case 'edit':
             await callback.message.answer(text=
@@ -60,6 +62,77 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             await callback.message.answer(text="Введите id юзера")
             await Bl_Id_User.id.set()
 
+        case 'trader_status':
+            await callback.message.answer('Введите id трейдера: ')
+            await TraderStatus.status.set()
+
+        case 'user_status':
+            await callback.message.answer('Введите id пользователя: ')
+            await UserStatus.status.set()
+
+
+@dp.message_handler(state=UserStatus.status)
+async def check_trader_status(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['status'] = message.text
+        await state.finish()
+    s = await state.get_data()
+    user_id = s['status']
+    if not all([i.isdigit() for i in user_id]):
+        await bot.send_message(chat_id=message.from_user.id, text='Некорректные данные')
+        return
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    result = cursor.execute(f'SELECT * FROM users WHERE user_id = {user_id};').fetchall()
+    if result[0][1] != None:
+        api=(result[0][4][-5:],result[0][5][-5:])
+    else:
+        api=(None,None)
+    if result is not None:
+        await bot.send_message(chat_id=message.from_user.id,
+                                text=f'''id: {result[0][0]}\r\n
+sub_start: {result[0][1]}\r\n
+sub_end: {result[0][2]}\r\n
+status: {result[0][3]}\r\n
+api_key: {api[0]}\r\n
+api_secret: {api[1]}\r\n
+subsribsions: {result[0][6]}\r\n
+transaction: {result[0][7]}''')
+    else:
+        bot.send_message(chat_id=message.from_user.id,
+                         text='Такого пользователя нет')
+    cursor.close()
+
+
+@dp.message_handler(state=TraderStatus.status)
+async def check_trader_status(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['status'] = message.text
+        await state.finish()
+    s = await state.get_data()
+    trader_id = s['status']
+    if not all([i.isdigit() for i in trader_id]):
+        await bot.send_message(chat_id=message.from_user.id, text='Некорректные данные')
+        return
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    result = cursor.execute(f'SELECT * FROM traders WHERE trader_id = {trader_id};').fetchall()
+    if result[0][1] != None:
+        api=(result[0][1][-5:],result[0][2][-5:])
+    else:
+        api=(None,None)
+    if result is not None:
+        await bot.send_message(chat_id=message.from_user.id,
+                                text=f'''id: {result[0][0]}\r\n
+api_key: {api[0]}\r\n
+api_secret: {api[1]}\r\n
+subscribers: {result[0][3]}\r\n
+history: {result[0][4]}\r\n
+trader_keys: {result[0][5]}''')
+    else:
+        bot.send_message(chat_id=message.from_user.id,
+                         text='Такого трейдера нет')
+    cursor.close()
 
 
 @dp.message_handler(state=Bl_Id_Trader.id)
