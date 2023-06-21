@@ -1,3 +1,5 @@
+import sqlite3
+
 from handlers.A_head_of_handlers import *
 
 @dp.callback_query_handler(lambda c: c.data[0] == 'C')
@@ -171,14 +173,29 @@ async def add_trader(message: types.Message, state: FSMContext):
         proxy['id'] = message.text
         await state.finish()
     s = await state.get_data()
-    trader_id = s['id']
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
-    cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
-    conn.commit()
-    await bot.send_message(chat_id=message.from_user.id,
-                           text='Пользователь успешно заблокирован',
-                           reply_markup=kb_black_list)
+    try:
+        trader_id = s['id']
+        try:
+            trader_id = int(trader_id)
+            conn = sqlite3.connect('db/database.db')
+            cursor = conn.cursor()
+            cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
+            conn.commit()
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text='Пользователь успешно заблокирован',
+                                   reply_markup=kb_black_list)
+        except ValueError as e:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text='Вы ввели не численное значение',
+                                   reply_markup=kb_black_list)
+    except KeyError as e:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Вы недавно добавляли этого пользователя в чс. Повторите попытку для подтверждения.',
+                               reply_markup=kb_black_list)
+    except sqlite3.IntegrityError as e:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Этот пользователь уже в черном списке.',
+                               reply_markup=kb_black_list)
 
 
 @dp.message_handler(state=Bl_Id_User.id)
@@ -187,14 +204,29 @@ async def add_user(message: types.Message, state: FSMContext):
         proxy['id'] = message.text
         await state.finish()
     s = await state.get_data()
-    trader_id = s['id']
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
-    cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
-    conn.commit()
-    await bot.send_message(chat_id=message.from_user.id,
-                           text='Пользователь успешно заблокирован',
-                           reply_markup=kb_black_list)
+    try:
+        trader_id = s['id']
+        try:
+            trader_id = int(trader_id)
+            conn = sqlite3.connect('db/database.db')
+            cursor = conn.cursor()
+            cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
+            conn.commit()
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text='Пользователь успешно заблокирован',
+                                   reply_markup=kb_black_list)
+        except ValueError as e:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text='Вы ввели не численное значение',
+                                   reply_markup=kb_black_list)
+    except KeyError as e:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Вы недавно добавляли этого пользователя в чс. Повторите попытку для подтверждения.',
+                               reply_markup=kb_black_list)
+    except sqlite3.IntegrityError as e:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Этот пользователь уже в черном списке.',
+                               reply_markup=kb_black_list)
 
 
 # Удаление
@@ -204,19 +236,30 @@ async def set_api(message: types.Message, state: FSMContext):
         proxy['id'] = message.text
         await state.finish()
     s = await state.get_data()
-    user_id = s['id']
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
-    info = cursor.execute(f"""SELECT * FROM black_list WHERE id={user_id};""").fetchone()
-    if info is not None:
-        cursor.execute(f"""DELETE FROM black_list WHERE id={user_id};""")
-        conn.commit()
+    try:
+        user_id = s['id']
+        try:
+            trader_id = int(user_id)
+            conn = sqlite3.connect('db/database.db')
+            cursor = conn.cursor()
+            info = cursor.execute(f"""SELECT * FROM black_list WHERE id={user_id};""").fetchone()
+            if info is not None:
+                cursor.execute(f"""DELETE FROM black_list WHERE id={user_id};""")
+                conn.commit()
+                await bot.send_message(chat_id=message.from_user.id,
+                                       text='Пользователь успешно удален из чс.',
+                                       reply_markup=kb_black_list)
+            else:
+                await bot.send_message(chat_id=message.from_user.id,
+                                       text='Пользователь не найден в чс.',
+                                       reply_markup=kb_black_list)
+        except ValueError as e:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text='Вы ввели не численное значение',
+                                   reply_markup=kb_black_list)
+    except KeyError as e:
         await bot.send_message(chat_id=message.from_user.id,
-                               text='Пользователь успешно удален из чс.',
-                               reply_markup=kb_black_list)
-    else:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text='Пользователь не найден в чс.',
+                               text='Вы только что добавили этого пользователя. Повторите попытку для подтверждения.',
                                reply_markup=kb_black_list)
         
 
