@@ -15,3 +15,13 @@ class Bl_Id_User(StatesGroup):
 
 class UserDel(StatesGroup):
     id = State()
+
+class UserStatus(StatesGroup):
+    status = State()
+
+class TraderStatus(StatesGroup):
+    status = State()
+
+class SetUserSubscriptionStatus(StatesGroup):
+    sub_status = State()
+
