@@ -125,6 +125,10 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     if res:
                         await callback.message.edit_text(text=f'Статус юзера {data}: free',
                                                         reply_markup=ikst)
+                        cursor = conn.cursor()
+                        cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = "{data}"')
+                        conn.commit()
+                        cursor.close()
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                         reply_markup=ikst)
@@ -313,6 +317,7 @@ async def set_user_status(conn,id,status):
         cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
     except:
         return False
-    conn.commit()
-    cursor.close()
+    if status == 'paid':
+        conn.commit()
+        cursor.close()
     return True
