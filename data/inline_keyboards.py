@@ -26,6 +26,15 @@ ikkb1 = InlineKeyboardButton(text='Пользователь', callback_data='Cus
 ikkb2 = InlineKeyboardButton(text='Трейдер', callback_data='Ctrader_status')
 ikk.add(ikkb1,ikkb2)
 
+# ВЫДАЧА СТАТУСА
+ikst = InlineKeyboardMarkup(row_width=2)
+a = InlineKeyboardButton(text='set free', callback_data=f'Cset_free')
+b = InlineKeyboardButton(text='set paid', callback_data=f'Cset_paid')
+c = InlineKeyboardButton(text='Вернуться назад', callback_data='Creturn')
+ikst.add(a,b,c)
+
+
+
 #ЦЕНЫ
 inl_kb_pr = InlineKeyboardMarkup(row_width=2)
 ikp1 = InlineKeyboardButton(text='Назад', callback_data='Creturn')

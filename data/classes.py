@@ -21,3 +21,7 @@ class UserStatus(StatesGroup):
 
 class TraderStatus(StatesGroup):
     status = State()
+
+class SetUserSubscriptionStatus(StatesGroup):
+    sub_status = State()
+

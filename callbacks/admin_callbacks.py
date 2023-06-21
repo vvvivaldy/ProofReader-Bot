@@ -70,6 +70,36 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             await callback.message.answer('Введите id пользователя: ')
             await UserStatus.status.set()
 
+        case 'set_free':
+            with open('cache/cache.txt','r',encoding='utf-8')as data:
+                try:
+                    data = data.readlines()[0]
+                    conn = sqlite3.connect('db/database.db')
+                    res = await set_user_status(conn,data,'free')
+                    if res:
+                        await callback.message.edit_text(text=f'Статус юзера {data}: free',
+                                                        reply_markup=ikst)
+                    else:
+                        await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
+                                                        reply_markup=ikst)
+                except:
+                    print('Что-то с кэшом')
+        
+        case 'set_paid':
+            with open('cache/cache.txt','r',encoding='utf-8')as data:
+                try:
+                    data = data.readlines()[0]
+                    conn = sqlite3.connect('db/database.db')
+                    res = await set_user_status(conn,data,'paid')
+                    if res:
+                        await callback.message.edit_text(text=f'Статус юзера {data}: paid',
+                                                        reply_markup=ikst)
+                    else:
+                        await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
+                                                        reply_markup=ikst)
+                except:
+                    print('Что-то с кэшом')
+
 
 @dp.message_handler(state=UserStatus.status)
 async def check_trader_status(message: types.Message, state: FSMContext):
@@ -188,3 +218,14 @@ async def set_api(message: types.Message, state: FSMContext):
         await bot.send_message(chat_id=message.from_user.id,
                                text='Пользователь не найден в чс.',
                                reply_markup=kb_black_list)
+        
+
+async def set_user_status(conn,id,status):
+    cursor = conn.cursor()
+    try:
+        cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
+    except:
+        return False
+    conn.commit()
+    cursor.close()
+    return True

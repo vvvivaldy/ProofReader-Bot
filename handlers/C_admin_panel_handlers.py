@@ -112,8 +112,14 @@ async def client_status(message: types.Message):
 
 
 @dp.message_handler(Text(equals='Выдать статус'))
-async def _(message: types.Message):
-    pass
+async def set_status(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Введите user_id которому надо выдать статус: ')
+        await SetUserSubscriptionStatus.sub_status.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 @dp.message_handler(Text(equals='Перешифровка'))
@@ -160,3 +166,38 @@ async def edit_price(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.") 
+        
+
+@dp.message_handler(state=SetUserSubscriptionStatus.sub_status)
+async def SetUserSubStatus(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['sub_status'] = message.text
+        await state.finish()
+    s = await state.get_data()
+    try:
+        user = s['sub_status']
+    except:
+        await bot.send_message(chat_id=message.from_user.id,
+                text='Вы только что вводили этого пользователя. Повторите если вы не ошиблись',
+                reply_markup=kb_admin)
+        return
+    conn = sqlite3.connect('db/database.db')
+    cur = conn.cursor()
+    try:
+        user_db = cur.execute(f'SELECT user_id, status FROM users WHERE user_id = {user}').fetchall()
+    except:
+        await bot.send_message(chat_id=message.from_user.id,
+                        text='Неккоректные данные в введенном id',
+                        reply_markup=kb_admin)
+        return
+    cur.close()
+    if user.isdigit() and len(user_db)>0:
+        with open('cache/cache.txt','w',encoding='utf-8') as data:
+            data.writelines([user])
+        await bot.send_message(chat_id=message.from_user.id,
+                                text=f'Статус юзера {user}: {user_db[0][1]}',
+                                reply_markup=ikst)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                                text='Введены неккоректные данные или такого юзера не существует в бд',
+                                reply_markup=kb_admin)
