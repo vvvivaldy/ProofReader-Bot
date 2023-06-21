@@ -27,7 +27,7 @@ async def admin_callbacks(callback: types.CallbackQuery,):
         case 'trans':
             conn = sqlite3.connect('db/database.db')
             cursor = conn.cursor()
-            cursor.execute("SELECT date, user_id, amount, transaction FROM purchase_history")
+            cursor.execute("SELECT date, user_id, amount, [transaction] FROM purchase_history")
             result = cursor.fetchall()
             text2 = ''
             for i in range(len(result)):
