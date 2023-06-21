@@ -105,6 +105,18 @@ async def check_bl(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
+@dp.message_handler(Text(equals='Назад в админку'))
+async def check_bl(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы в главном меню админки",
+                               reply_markup=kb_admin)
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
 @dp.message_handler(Text(equals='Вывод данных о клиенте'))
 async def client_status(message: types.Message):
     await message.answer(text='Кого выбираем?',

@@ -33,7 +33,13 @@ b = InlineKeyboardButton(text='set paid', callback_data=f'Cset_paid')
 c = InlineKeyboardButton(text='Вернуться назад', callback_data='Creturn')
 ikst.add(a,b,c)
 
-
+# Выбор Период
+ikb_period = InlineKeyboardMarkup(row_width=2)
+q = InlineKeyboardButton(text='day', callback_data=f'Cday')
+w = InlineKeyboardButton(text='week', callback_data=f'Cweek')
+e = InlineKeyboardButton(text='month', callback_data='Cmonth')
+r = InlineKeyboardButton(text='year', callback_data='Cyear')
+ikb_period.add(q, w).add(e, r)
 
 #ЦЕНЫ
 inl_kb_pr = InlineKeyboardMarkup(row_width=2)
@@ -45,8 +51,3 @@ inl_kb_status = InlineKeyboardMarkup(row_width=2)
 ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='CTrader')
 ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='CUser')
 inl_kb_status.add(ikbtn1, ikbtn2)
-
-inl_kb_status2 = InlineKeyboardMarkup(row_width=2)
-ikbtn3 = InlineKeyboardButton(text='Трейдер', callback_data='Trader_del')
-ikbtn4 = InlineKeyboardButton(text='Юзер', callback_data='User_del')
-inl_kb_status2.add(ikbtn3, ikbtn4)
