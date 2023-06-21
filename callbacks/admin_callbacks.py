@@ -2,6 +2,35 @@ import sqlite3
 
 from handlers.A_head_of_handlers import *
 
+
+def help_func(tek_date, total_dates_list, previous):
+    tek_date = t.strptime(str(tek_date.date()), "%Y-%m-%d")
+    total_list = [obj for obj in total_dates_list if (obj >= previous) and obj <= tek_date]
+    return len(total_list)
+
+
+def date_func(gap):
+    tek_date = datetime.now()
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    dates_list = cursor.execute("SELECT subscribe_start FROM users WHERE subscribe_start IS NOT NULL OR "
+                                "subscribe_start != '';").fetchall()
+    total_dates_list = [t.strptime(i[0], "%Y-%m-%d") for i in dates_list]
+    match gap:
+        case "day":
+            previous = t.strptime(str((tek_date - timedelta(days=1)).date()), "%Y-%m-%d")
+            return help_func(tek_date, total_dates_list, previous)
+        case "week":
+            previous = t.strptime(str((tek_date - timedelta(days=7)).date()), "%Y-%m-%d")
+            return help_func(tek_date, total_dates_list, previous)
+        case "month":
+            previous = t.strptime(str((tek_date - timedelta(days=30)).date()), "%Y-%m-%d")
+            return help_func(tek_date, total_dates_list, previous)
+        case "year":
+            previous = t.strptime(str((tek_date - timedelta(days=365)).date()), "%Y-%m-%d")
+            return help_func(tek_date, total_dates_list, previous)
+
+
 @dp.callback_query_handler(lambda c: c.data[0] == 'C')
 async def admin_callbacks(callback: types.CallbackQuery,):
     callback.data = callback.data[1:]
@@ -20,11 +49,26 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             users_week = result[0][6]
             text1 = f'Всего пользователей: <b>{users}</b>\nВсего трейдеров: <b>{traders}</b>\nПодписок на неделю: <b>{users_week}</b>\nПодписок на месяц: <b>{users_month}</b>\nПодписок на 3 месяца: {users_3_month}\nПодписок на 6 месяцев: <b>{users_6_month}</b>\nПодписок на год: <b>{users_1_year}</b>'
             await bot.send_message(chat_id=callback.from_user.id,
-                            text=text1, parse_mode="HTML")
+                                   text=text1, parse_mode="HTML")
             conn.commit()
             cursor.close()
         case 'new':
-            pass
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text="Выберите период.", parse_mode="HTML",
+                                   reply_markup=ikb_period)
+        case 'day':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text=f"Новых пользователей за день: <b>{date_func('day')}</b>", parse_mode="HTML")
+
+        case 'week':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text=f"Новых пользователей за неделю: <b>{date_func('week')}</b>", parse_mode="HTML")
+        case 'month':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text=f"Новых пользователей за месяц: <b>{date_func('month')}</b>", parse_mode="HTML")
+        case 'year':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text=f"Новых пользователей за год: <b>{date_func('year')}</b>", parse_mode="HTML")
 
         case 'trans':
             conn = sqlite3.connect('db/database.db')
