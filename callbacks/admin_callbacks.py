@@ -228,6 +228,7 @@ async def add_trader(message: types.Message, state: FSMContext):
             conn = sqlite3.connect('db/database.db')
             cursor = conn.cursor()
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
+            cursor.execute(f'UPDATE traders SET status = "block" WHERE trader_id = {trader_id}')
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -259,6 +260,7 @@ async def add_user(message: types.Message, state: FSMContext):
             conn = sqlite3.connect('db/database.db')
             cursor = conn.cursor()
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
+            cursor.execute(f'UPDATE users SET status = "block" WHERE user_id = {trader_id}')
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -287,12 +289,18 @@ async def set_api(message: types.Message, state: FSMContext):
     try:
         user_id = s['id']
         try:
-            trader_id = int(user_id)
             conn = sqlite3.connect('db/database.db')
             cursor = conn.cursor()
             info = cursor.execute(f"""SELECT * FROM black_list WHERE id={user_id};""").fetchone()
+            stat = cursor.execute(f'SELECT status FROM black_list WHERE id = {user_id}').fetchone()[0]
             if info is not None:
                 cursor.execute(f"""DELETE FROM black_list WHERE id={user_id};""")
+                if stat == 'user':
+                    cursor.execute(f'UPDATE users SET status = "free" WHERE user_id = {user_id}')
+                    cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = {user_id}')
+                elif stat == 'trader':
+                    cursor.execute(f'UPDATE traders SET status = "active" WHERE trader_id = {user_id}')
+                    cursor.execute(f'UPDATE traders SET api_key = "", api_secret = "" WHERE trader_id = {user_id}')
                 conn.commit()
                 await bot.send_message(chat_id=message.from_user.id,
                                        text='Пользователь успешно удален из чс.',

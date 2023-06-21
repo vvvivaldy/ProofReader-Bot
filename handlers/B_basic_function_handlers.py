@@ -40,11 +40,17 @@ async def descr_func(message: types.Message):
 # Хендлер Покупки подписки
 @dp.message_handler(Text(equals="Оформить подписку"))
 async def buy(message: types.Message):
-    if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
-        await bot.send_photo(message.chat.id,
-                             photo='https://i.postimg.cc/zBynYjZq/photo-2023-06-18-16-59-44.jpg',
-                             caption="Тестовый платеж",
-                             reply_markup=paykb)
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    if cursor.execute(f'SELECT status FROM users WHERE user_id = {message.from_user.id};').fetchone()[0] != 'block':
+        if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
+            await bot.send_photo(message.chat.id,
+                                photo='https://i.postimg.cc/zBynYjZq/photo-2023-06-18-16-59-44.jpg',
+                                caption="Тестовый платеж",
+                                reply_markup=paykb)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='ВЫ В ЧЕРНОМ СПИСКЕ. ОБРАТИТЕСЬ В ТЕХ. ПОДДЕРЖКУ.')
     
 
 @dp.pre_checkout_query_handler(lambda query: True)
