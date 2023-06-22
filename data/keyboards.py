@@ -1,6 +1,9 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 
+# КНОПКИ И ДЛЯ ПЛАТНОГО ЮЗЕРА И ДЛЯ ТРЕЙДЕРА
+b_edit_api = KeyboardButton('Редактировать API')
+
 # Бесплатная Клавиатура
 kb_free = ReplyKeyboardMarkup(resize_keyboard=True)
 b1 = KeyboardButton("Описание")
@@ -51,3 +54,7 @@ bl_btn2 = KeyboardButton('Добавить в чс')
 bl_btn3 = KeyboardButton('Удалить из чс')
 bl_btn4 = KeyboardButton('Назад в админку')
 kb_black_list.add(bl_btn1).add(bl_btn2, bl_btn3).add(bl_btn4)
+
+# клавиатура для платного юзера
+kb_paid_user = ReplyKeyboardMarkup(resize_keyboard=True)
+kb_paid_user.add(b_edit_api)

@@ -1,5 +1,12 @@
 from handlers.E_traders_panel_handlers import *
 
+
+
+@dp.message_handler(Text(equals='Редактировать API'))
+async def edit_api(message: types.Message):
+    pass
+
+
 # Хендлер хуйни
 @dp.message_handler()
 async def unknown_func(message: types.Message):

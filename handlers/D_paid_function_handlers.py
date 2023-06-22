@@ -1,16 +1,23 @@
 from handlers.C_admin_panel_handlers  import *
 
 # Проверка на полную регистрацию
-def api_stock(a: types.Message):
+def paid_validate(id: int):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    return cursor.execute('SELECT api_secret FROM users WHERE user_id=?;', (a,)).fetchone()
+    try:
+        res = cursor.execute(f'SELECT status FROM users WHERE user_id={id};').fetchone()[0]
+        if res == 'paid':
+            return True
+        else:
+            return False
+    except:
+        return False
 
 
 # Хендлер Авторизации
 @dp.message_handler(Text(equals="Авторизация"))
 async def auth_func(message: types.Message):
-    if api_stock(message.from_user.id) is not None:
+    if paid_validate(message.from_user.id):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
         cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
@@ -62,8 +69,7 @@ async def set_api(message: types.Message, state: FSMContext):
 # Хендлер Профиля
 @dp.message_handler(Text(equals="Профиль"))
 async def profile_func(message: types.Message):
-    info = api_stock(message.from_user.id)
-    if info is not None:
+    if paid_validate(message.from_user.id):
         await message.answer(text="Выберите действие", reply_markup=kb_profile)
     else:
         await bot.send_message(chat_id=message.from_user.id,
@@ -74,8 +80,7 @@ async def profile_func(message: types.Message):
 # Хендлер Баланса
 @dp.message_handler(Text(equals="Баланс"))
 async def balance_func(message: types.Message):
-    info = api_stock(message.from_user.id)
-    if info is not None:
+    if paid_validate(message.from_user.id):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
