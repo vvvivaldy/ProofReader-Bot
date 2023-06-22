@@ -25,6 +25,11 @@ async def descr_func(message: types.Message):
                            text=DESCR, parse_mode="HTML")
 
 
+# хендлер инфо
+@dp.message_handler(Text(equals='Info'))
+async def info(message: types.Message):
+    await message.answer(text=INFO, parse_mode='html',reply_markup=kb_free)
+
 
 # Хендлер Инструкции
 @dp.message_handler(Text(equals="Инструкция"))
