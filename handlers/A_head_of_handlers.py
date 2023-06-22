@@ -10,7 +10,7 @@ admin_ids = [os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID')]
 
 # Подключение к бд
 def db_connect():
-    conn = sqlite3('db/database.db')
+    conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     return conn, cursor
 
