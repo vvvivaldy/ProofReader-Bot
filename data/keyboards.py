@@ -40,4 +40,12 @@ adb3 = KeyboardButton('Черный список')
 adb4 = KeyboardButton('Вывод данных о клиенте')
 adb5 = KeyboardButton('Выдать статус')
 adb6 = KeyboardButton('Перешифровка')
-kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb5)
+kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb6)
+
+# Клавиатура черного списка
+kb_black_list = ReplyKeyboardMarkup(resize_keyboard=True)
+bl_btn1 = KeyboardButton('Посмотреть заблокированных')
+bl_btn2 = KeyboardButton('Добавить в чс')
+bl_btn3 = KeyboardButton('Удалить из чс')
+bl_btn4 = KeyboardButton('Назад в админку')
+kb_black_list.add(bl_btn1).add(bl_btn2, bl_btn3).add(bl_btn4)

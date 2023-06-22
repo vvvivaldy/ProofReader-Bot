@@ -1,7 +1,7 @@
 from handlers.C_admin_panel_handlers  import *
 
 # Проверка на полную регистрацию
-def api_stock(a):
+def api_stock(a: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     return cursor.execute('SELECT api_secret FROM users WHERE user_id=?;', (a,)).fetchone()
@@ -10,19 +10,23 @@ def api_stock(a):
 # Хендлер Авторизации
 @dp.message_handler(Text(equals="Авторизация"))
 async def auth_func(message: types.Message):
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
-    cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
-    result = cursor.fetchone()
-    if result[0] == "paid":
+    if api_stock(message.from_user.id) is not None:
+        conn = sqlite3.connect('db/database.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+        result = cursor.fetchone()
+        if result[0] == "paid":
+            await bot.send_message(chat_id=message.from_user.id,
+                                text="Введите ваш <b>api_key</b> и <b>api_secret</b> через пробел: ",
+                                parse_mode="HTML")
+            await Auth.api.set()
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                text="Вы еще не оплатили подписку",
+                                parse_mode="HTML")
+    else: 
         await bot.send_message(chat_id=message.from_user.id,
-                               text="Введите ваш <b>api_key</b> и <b>api_secret</b> через пробел: ",
-                               parse_mode="HTML")
-        await Auth.api.set()
-    else:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы еще не оплатили подписку",
-                               parse_mode="HTML")
+                           text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 
@@ -33,7 +37,6 @@ async def set_api(message: types.Message, state: FSMContext):
         proxy['api'] = message.text
         await state.finish()
     s = await state.get_data()
-
     api_key = encrypt_api(s['api'].partition(' ')[0])
     api_secret = encrypt_api(s['api'].partition(' ')[2])
     try:
