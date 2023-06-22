@@ -25,3 +25,5 @@ class TraderStatus(StatesGroup):
 class SetUserSubscriptionStatus(StatesGroup):
     sub_status = State()
 
+class EditApi(StatesGroup):
+    api = State()
