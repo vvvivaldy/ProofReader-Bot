@@ -159,6 +159,8 @@ async def predostr_func(message: types.Message):
 # Хендлер Пользование ботом
 @dp.message_handler(Text(equals="Как создать API ключ?"))
 async def instruct_func(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id,
+                           text='Видеоинструкция уже грузится. Пожалуйста, немного подождите...')
     await bot.send_video(chat_id=message.from_user.id,
                          video=open("imgs/instruct.mp4", "rb"),
                          caption="Подробная инструкция")
