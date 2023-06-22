@@ -1,18 +1,5 @@
 from handlers.C_admin_panel_handlers  import *
 
-# Проверка на подписку
-def paid_validate(id: int) -> bool:
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
-    try:
-        res = cursor.execute(f'SELECT status FROM users WHERE user_id={id};').fetchone()[0]
-        if res == 'paid':
-            return True
-        else:
-            return False
-    except:
-        return False
-
 
 # Хендлер Авторизации
 @dp.message_handler(Text(equals="Авторизация"))
