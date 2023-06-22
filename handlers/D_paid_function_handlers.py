@@ -1,7 +1,7 @@
 from handlers.C_admin_panel_handlers  import *
 
-# Проверка на полную регистрацию
-def paid_validate(id: int):
+# Проверка на подписку
+def paid_validate(id: int) -> bool:
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     try:
