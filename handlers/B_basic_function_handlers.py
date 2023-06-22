@@ -35,6 +35,25 @@ async def descr_func(message: types.Message):
                            reply_markup=kb_instruct)
 
 
+# хендлер вывода трейдеров
+@dp.message_handler(Text(equals='Наши Трейдеры'))
+async def toptraders(message: types.Message):
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    traders = cursor.execute('SELECT name FROM traders').fetchmany(100)
+    res = ''
+    print(traders)
+    for i in range(0,len(traders)):
+        res += f'-: {traders[i][0]}\n' 
+        if traders[i][0] == None and i != 0:
+            return
+        elif i == 0 and traders[i][0] == None:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text = f'База данных трейдеров пуста')
+            return
+    await bot.send_message(chat_id=message.from_user.id,
+                                   text = f'Наши трейдеры: \n{res}')
+
 
 
 # Хендлер Покупки подписки

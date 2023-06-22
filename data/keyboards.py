@@ -4,9 +4,11 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 # Бесплатная Клавиатура
 kb_free = ReplyKeyboardMarkup(resize_keyboard=True)
 b1 = KeyboardButton("Описание")
+b2 = KeyboardButton('Наши Трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
-kb_free.add(b1).add(b3).add(b4)
+b5 = KeyboardButton('Info')
+kb_free.add(b1,b3).add(b2,b5).add(b4)
 
 # Платная Клавиатура (Незареганный аккаунт)
 kb_unreg = ReplyKeyboardMarkup(resize_keyboard=True)
