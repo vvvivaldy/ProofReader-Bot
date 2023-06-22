@@ -23,7 +23,8 @@ kb_reg = ReplyKeyboardMarkup(resize_keyboard=True)
 b_p1 = KeyboardButton("Профиль")
 b_p2 = KeyboardButton("Настройки бота")
 b_p4 = KeyboardButton("Начать торговлю")
-kb_reg.add(b_p1).add(b_p2).add(b3).add(b_p4)
+b_edit_api = KeyboardButton('Редактировать API')
+kb_reg.add(b_p1,b_p2,b_p4).add(b2,b5).add(b_edit_api)
 
 # Клавиатура профиля
 kb_profile = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -54,7 +55,3 @@ bl_btn2 = KeyboardButton('Добавить в чс')
 bl_btn3 = KeyboardButton('Удалить из чс')
 bl_btn4 = KeyboardButton('Назад в админку')
 kb_black_list.add(bl_btn1).add(bl_btn2, bl_btn3).add(bl_btn4)
-
-# клавиатура для платного юзера
-kb_paid_user = ReplyKeyboardMarkup(resize_keyboard=True)
-kb_paid_user.add(b_edit_api)
