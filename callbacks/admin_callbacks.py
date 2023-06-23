@@ -342,7 +342,7 @@ async def set_user_status(conn,id,status):
         return False
     if status == 'paid':
         conn.commit()
-        cursor.close()
+        conn.close()
     return True
 
 
@@ -362,5 +362,5 @@ status, name) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?)""", (data[0], data[1], N
         return False
     if status == 'trader':
         conn.commit()
-        cursor.close()
+        conn.close()
     return True
