@@ -72,8 +72,8 @@ async def balance_func(message: types.Message):
         cursor = conn.cursor()
         data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;', (message.from_user.id,)).fetchone()
         session = HTTP(
-            api_key=decrypt_api(data[1][2:-1]),
-            api_secret=decrypt_api(data[0][2:-1])
+            api_key=decrypt_api(data[1]),
+            api_secret=decrypt_api(data[0])
         )
         
         wallet_balance_data = session.get_wallet_balance(accountType="UNIFIED")["result"]["list"][0]
