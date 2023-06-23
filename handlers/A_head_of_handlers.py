@@ -14,7 +14,7 @@ def trader_validate(id: int) -> bool:
     cursor = conn.cursor()
     try:
         res = cursor.execute(f'SELECT status FROM traders WHERE trader_id={id};').fetchone()[0]
-        if res == 'НАДО НАПИСАТЬ КАКОЙ СТАТУС У ТРЕЙДЕРА':
+        if res == 'trader':
             return True
         else:
             return False

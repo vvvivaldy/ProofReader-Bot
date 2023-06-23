@@ -16,7 +16,7 @@ kb_free.add(b1,b3).add(b2,b5).add(b4)
 # Платная Клавиатура (Незареганный аккаунт)
 kb_unreg = ReplyKeyboardMarkup(resize_keyboard=True)
 b_unreg1 = KeyboardButton("Авторизация")
-kb_unreg.add(b_unreg1)
+kb_unreg.add(b_unreg1).add(b3)
 
 # Платная Клавиатура (Зареганный аккаунт)
 kb_reg = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -28,7 +28,7 @@ kb_reg.add(b_p1).add(b_p2).add(b3).add(b_p4)
 # Клавиатура профиля
 kb_profile = ReplyKeyboardMarkup(resize_keyboard=True)
 prof_b1 = KeyboardButton("Баланс")
-prof_b2 = KeyboardButton("В меню")
+prof_b2 = KeyboardButton("Назад")
 kb_profile.add(prof_b1).add(prof_b2)
 
 # Клавиатура инструкции

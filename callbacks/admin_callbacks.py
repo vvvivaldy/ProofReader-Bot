@@ -150,6 +150,21 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                 except:
                     print('Что-то с кэшом')
 
+        case 'set_trader':
+            with open('cache/cache.txt', 'r', encoding='utf-8') as data:
+                try:
+                    data = data.readlines()[0]
+                    conn = sqlite3.connect('db/database.db')
+                    res = await set_trader_status(conn, data, 'trader')
+                    if res:
+                        await callback.message.edit_text(text=f'Статус юзера {data}: trader',
+                                                         reply_markup=ikst)
+                    else:
+                        await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
+                                                         reply_markup=ikst)
+                except:
+                    print('Что-то с кэшом')
+
 
 @dp.message_handler(state=UserStatus.status)
 async def check_trader_status(message: types.Message, state: FSMContext):
@@ -326,6 +341,26 @@ async def set_user_status(conn,id,status):
     except:
         return False
     if status == 'paid':
+        conn.commit()
+        cursor.close()
+    return True
+
+
+async def set_trader_status(conn, id, status):
+    cursor = conn.cursor()
+    try:
+        data = cursor.execute(f"SELECT api_key, api_secret FROM users WHERE user_id = {id}").fetchone()
+        cursor.execute(f'DELETE FROM users WHERE user_id = {id}')
+        if data[0] != '' and data[1] != '':
+            cursor.execute(f"""INSERT INTO traders (trader_id, api_key, api_secret, subscribers, history, trader_keys, 
+status, name) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?)""", (data[0], data[1], None, None, None, None))
+        else:
+            cursor.execute(f"INSERT INTO traders (trader_id, api_key, api_secret, subscribers, history, trader_keys,"
+                           f"status, name) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?)", (None, None, None, None, None, None))
+    except Exception as e:
+        print(e)
+        return False
+    if status == 'trader':
         conn.commit()
         cursor.close()
     return True

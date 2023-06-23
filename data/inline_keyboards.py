@@ -31,7 +31,8 @@ ikst = InlineKeyboardMarkup(row_width=2)
 a = InlineKeyboardButton(text='set free', callback_data=f'Cset_free')
 b = InlineKeyboardButton(text='set paid', callback_data=f'Cset_paid')
 c = InlineKeyboardButton(text='Вернуться назад', callback_data='Creturn')
-ikst.add(a,b,c)
+d = InlineKeyboardButton(text='set trader', callback_data='Cset_trader')
+ikst.add(a,b, d, c)
 
 # Выбор Период
 ikb_period = InlineKeyboardMarkup(row_width=2)

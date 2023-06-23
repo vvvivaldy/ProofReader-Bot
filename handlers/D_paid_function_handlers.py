@@ -4,12 +4,15 @@ from handlers.C_admin_panel_handlers  import *
 # Хендлер Авторизации
 @dp.message_handler(Text(equals="Авторизация"))
 async def auth_func(message: types.Message):
-    if paid_validate(message.from_user.id):
+    if paid_validate(message.from_user.id) or trader_validate(message.from_user.id):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
-        cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+        if not trader_validate(message.from_user.id):
+            cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
+        else:
+            cursor.execute("SELECT status FROM traders WHERE trader_id = ?", (message.from_user.id,))
         result = cursor.fetchone()
-        if result[0] == "paid":
+        if result[0] == "paid" or result[0] == "trader":
             await bot.send_message(chat_id=message.from_user.id,
                                 text="Введите ваш <b>api_key</b> и <b>api_secret</b> через пробел: ",
                                 parse_mode="HTML")
@@ -42,15 +45,18 @@ async def set_api(message: types.Message, state: FSMContext):
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
         print(e)
         return
-    
+
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    cursor.execute(f"""UPDATE users SET api_secret = "{api_secret}", api_key = "{api_key}"
-                            WHERE user_id = {message.from_user.id}""")
+    if not trader_validate(message.from_user.id):
+        cursor.execute(f"""UPDATE users SET api_secret = "{api_secret}", api_key = "{api_key}"
+                                WHERE user_id = {message.from_user.id}""")
+    else:
+        cursor.execute(f"""UPDATE traders SET api_secret = "{api_secret}", api_key = "{api_key}"
+                                        WHERE trader_id = {message.from_user.id}""")
     conn.commit()
     cursor.close()
     await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
-
 
 
 # Хендлер Профиля

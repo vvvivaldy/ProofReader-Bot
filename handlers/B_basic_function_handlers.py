@@ -4,16 +4,30 @@ from callbacks.basic_callbacks import *
 # Хендлер старта
 @dp.message_handler(commands=["start"])
 async def start_func(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id,
-                           text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                f"Подробнее ты можешь узнать нажав  "
-                                f"на кнопку \"Описание\"",
-                           reply_markup=kb_free)
-    # Подключение к бд
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
-    await db_validate(cursor, conn, message, info)
+    try:
+        traders = cursor.execute('SELECT trader_id, api_key FROM traders;').fetchall()
+        idx = [*map(lambda x: x[0], traders)].index(message.from_user.id)
+        if traders[idx][1] is None:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_unreg)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_reg)
+    except Exception as e:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                    f"Подробнее ты можешь узнать нажав  "
+                                    f"на кнопку \"Описание\"",
+                               reply_markup=kb_free)
+        # Подключение к бд
+        info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
+        await db_validate(cursor, conn, message, info)
     await message.delete()
 
 
@@ -147,27 +161,40 @@ async def successfull_payment(message: types.Message):
 
 
 # Хендлер Возращения в меню
-@dp.message_handler(Text(equals="В меню"))
+@dp.message_handler(Text(equals="Назад"))
 async def menu_func(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
     result = cursor.fetchone()
-    if result[0] == "free":
-        await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы вернулись в меню",
-                               parse_mode="HTML",
-                               reply_markup=kb_free)
-    elif result[0] == "paid" and result[1] != "":
-        await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы вернулись в меню",
-                               parse_mode="HTML",
-                               reply_markup=kb_reg)
-    elif result[0] == "paid" and result[1] == "":
-        await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы вернулись в меню",
-                               parse_mode="HTML",
-                               reply_markup=kb_unreg)
+    if result is not None:
+        if result[0] == "free":
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы вернулись в меню",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_free)
+        elif result[0] == "paid" and result[1] != "":
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы вернулись в меню",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_reg)
+        elif result[0] == "paid" and result[1] == "":
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы вернулись в меню",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_unreg)
+    else:
+        data = cursor.execute("SELECT api_key FROM traders WHERE trader_id = ?", (message.from_user.id,)).fetchone()
+        if data[0] is not None:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы вернулись в меню",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_reg)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы вернулись в меню",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_unreg)
 
 
 
