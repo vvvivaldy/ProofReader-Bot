@@ -18,7 +18,7 @@ async def start_func(message: types.Message):
             await bot.send_message(chat_id=message.from_user.id,
                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
                                    parse_mode="HTML",
-                                   reply_markup=kb_reg)
+                                   reply_markup=kb_trader)
     except Exception as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "

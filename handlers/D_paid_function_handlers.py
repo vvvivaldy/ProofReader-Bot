@@ -52,12 +52,14 @@ async def set_api(message: types.Message, state: FSMContext):
     if not trader_validate(message.from_user.id):
         cursor.execute(f"""UPDATE users SET api_secret = "{api_secret}", api_key = "{api_key}"
                                 WHERE user_id = {message.from_user.id}""")
+        await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
+
     else:
         cursor.execute(f"""UPDATE traders SET api_secret = "{api_secret}", api_key = "{api_key}"
                                         WHERE trader_id = {message.from_user.id}""")
+        await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_trader)
     conn.commit()
     cursor.close()
-    await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
 
 
 # Хендлер Профиля
