@@ -148,7 +148,9 @@ async def re_encrypt_api(message: types.Message):
             await bot.send_message(chat_id=message.from_user.id,
                                 text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе юзеров')
             return
-        dotenv.set_key(dotenv_file,'CIPHER_KEY',str(Fernet.generate_key())[2:-2],encoding='utf-8')
+        tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
+        dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
+        tmp = None
         for user in data_user:
             cur.execute(f'''UPDATE users SET api_key = "{encrypt_api(decrypt_api(user[1],tmp_key))}",
                                             api_secret = "{encrypt_api(decrypt_api(user[2],tmp_key))}" 
@@ -170,7 +172,9 @@ async def re_encrypt_api(message: types.Message):
             return
         
         if len(data_user) == 0:
-            dotenv.set_key(dotenv_file,'CIPHER_KEY',str(Fernet.generate_key())[2:-2],encoding='utf-8')
+            tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
+            dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
+            tmp = None
 
         for trader in data_trader:
             cur.execute(f'''UPDATE traders SET api_key = "{encrypt_api(decrypt_api(trader[1],tmp_key))}",
