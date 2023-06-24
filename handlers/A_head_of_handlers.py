@@ -1,12 +1,11 @@
 from data.imports import *
 
-dotenv_file = dotenv.find_dotenv()
-dotenv.load_dotenv(dotenv_file)
+
+dotenv.load_dotenv(dotenv.find_dotenv())
 
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 admin_ids = [os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID')]
-
 
 # проверка на трейдера
 def trader_validate(id: int) -> bool:

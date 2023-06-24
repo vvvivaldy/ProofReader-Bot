@@ -138,27 +138,55 @@ async def set_status(message: types.Message):
 async def re_encrypt_api(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cur = conn.cursor()
-    data = cur.execute('SELECT user_id, api_key, api_secret FROM users WHERE api_key != "";').fetchall()
-    if len(data) > 0:
+    data_user = cur.execute('SELECT user_id, api_key, api_secret FROM users WHERE api_key != "";').fetchall()
+    data_trader = cur.execute('SELECT trader_id, api_key, api_secret FROM traders WHERE api_key != "";').fetchall()
+    tmp_key = os.getenv('CIPHER_KEY')
+    if len(data_user) > 0:
         try:
-            tmp_key = os.getenv('CIPHER_KEY')
-            decrypt_api(data[0][1],tmp_key)
+            decrypt_api(data_user[0][1],tmp_key)
         except InvalidToken:
             await bot.send_message(chat_id=message.from_user.id,
-                                text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу)')
+                                text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе юзеров')
             return
-        dotenv.set_key(dotenv_file,'CIPHER_KEY',str(Fernet.generate_key())[2:-2],encoding='utf-8')
-        for user in data:
+        tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
+        dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
+        tmp = None
+        for user in data_user:
             cur.execute(f'''UPDATE users SET api_key = "{encrypt_api(decrypt_api(user[1],tmp_key))}",
                                             api_secret = "{encrypt_api(decrypt_api(user[2],tmp_key))}" 
                                             WHERE user_id = {user[0]}''')
             conn.commit()
 
         await bot.send_message(chat_id=message.from_user.id,
-                                text='Все api перекодированы')
+                                text='Все api юзеров перекодированы')
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                         text='База данных пуста')
+                         text='База данных клиентов пуста')
+    
+    if len(data_trader) > 0:
+        try:
+            decrypt_api(data_trader[0][1],tmp_key)
+        except InvalidToken:
+            await bot.send_message(chat_id=message.from_user.id,
+                                text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе трейдеров')
+            return
+        
+        if len(data_user) == 0:
+            tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
+            dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
+            tmp = None
+
+        for trader in data_trader:
+            cur.execute(f'''UPDATE traders SET api_key = "{encrypt_api(decrypt_api(trader[1],tmp_key))}",
+                                            api_secret = "{encrypt_api(decrypt_api(trader[2],tmp_key))}" 
+                                            WHERE trader_id = {trader[0]}''')
+            conn.commit()
+
+        await bot.send_message(chat_id=message.from_user.id,
+                                text='Все api трейдеров перекодированы')
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                         text='База данных трейдеров пуста')
 
 
 @dp.message_handler(lambda m: all([i.isdigit() for i in m.text[1:].split()]) and m.text[0] == '!')

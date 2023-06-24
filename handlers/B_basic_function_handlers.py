@@ -9,7 +9,7 @@ async def start_func(message: types.Message):
     try:
         traders = cursor.execute('SELECT trader_id, api_key FROM traders;').fetchall()
         idx = [*map(lambda x: x[0], traders)].index(message.from_user.id)
-        if traders[idx][1] is None:
+        if traders[idx][1] is None or traders[idx][1] == '':
             await bot.send_message(chat_id=message.from_user.id,
                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
                                    parse_mode="HTML",
