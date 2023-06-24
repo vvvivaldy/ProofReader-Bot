@@ -1,7 +1,13 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-"""ДЛЯ ОПЛАТЫ"""
+"""ОБЩИЕ ДЛЯ ПЛАТНЫХ И ТРЕЙДЕРОВ"""
+ik_edit_api = InlineKeyboardMarkup(row_width=1)
+ib_edit_api = InlineKeyboardButton(text='Редактировать', callback_data='Dedit_api')
+ik_edit_api.add(ib_edit_api)
+# бработка калбэка будет в paid_callbacks.py
 
+
+"""ДЛЯ ОПЛАТЫ"""
 #Клавиатура оплаты
 paykb = InlineKeyboardMarkup(row_width=2)
 payb1 = InlineKeyboardButton(text = '1 неделя', callback_data='B1 неделю')
@@ -51,3 +57,6 @@ inl_kb_status = InlineKeyboardMarkup(row_width=2)
 ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='CTrader')
 ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='CUser')
 inl_kb_status.add(ikbtn1, ikbtn2)
+
+
+"""ДЛЯ ПЛАТНОГО ЮЗЕРА"""
