@@ -60,4 +60,11 @@ ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='CUser')
 inl_kb_status.add(ikbtn1, ikbtn2)
 
 
+# Трейдер статистика
+ikb_trader_stat = InlineKeyboardMarkup(row_width=1)
+itsb1 = InlineKeyboardButton(text='Подписано людей',callback_data='Epeople')
+itsb2 = InlineKeyboardButton(text='Открытые сделки', callback_data='EOpenOrders')
+itsb3 = InlineKeyboardButton(text='История сделок',callback_data='EHistoryOrders')
+ikb_trader_stat.add(itsb1,itsb2,itsb3)
+
 """ДЛЯ ПЛАТНОГО ЮЗЕРА"""
