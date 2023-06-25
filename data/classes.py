@@ -37,3 +37,7 @@ class Key_Duration(StatesGroup):
 
 class Activation_Quantity(StatesGroup):
     quantity = State()
+
+
+class Key_Delete(StatesGroup):
+    key = State()

@@ -47,6 +47,33 @@ async def new_key(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
+@dp.message_handler(Text(equals='Удалить ключ'))
+async def new_key(message: types.Message):
+    if trader_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Введите ключ, который необходимо удалить")
+        await Key_Delete.key.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Вывод всех ключей'))
+async def view_keys(message: types.Message):
+    if trader_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        text = "🗝 <b>КЛЮЧ</b> | <em>ДАТА</em> | <u>КОЛ-ВО АКТИВАЦИЙ</u> \n\n"
+        data = cursor.execute(f"SELECT key, duration, quantity, quantity_tek FROM trader_keys WHERE trader_id = {message.from_user.id}").fetchall()
+        for obj in data:
+            text += f"<b>{data.index(obj) + 1}. {obj[0]}</b> | <em>{obj[1]}</em> | <u>{obj[3]}/{obj[2]}</u>\n"
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=text,
+                               parse_mode="HTML")
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
 @dp.message_handler(Text(equals='Статистика Профиля'))
 async def prof_stat(message: types.Message):
     if trader_validate(message.from_user.id):

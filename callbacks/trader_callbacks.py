@@ -33,9 +33,32 @@ async def trader_callbacks(callback: types.CallbackQuery,):
             await callback.answer('История ордеров')
 
 
+# Удаление ключей
+@dp.message_handler(state=Key_Delete.key)
+async def key_delete(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['key'] = message.text
+    s = await state.get_data()
+    key = s["key"]
+    conn, cursor = db_connect()
+    valid = cursor.execute(f"SELECT trader_id FROM trader_keys WHERE key = '{key}'").fetchone()
+    if valid is not None:
+        cursor.execute(f"DELETE FROM trader_keys WHERE key = '{key}'")
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Ключ был удален. Люди, которые использовали его, больше не смогут отследивать ваши действия",
+                               reply_markup=kb_trader)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Такого ключа не существует. Повторите попытку",
+                               reply_markup=kb_trader)
+    await state.reset_state()
+
+
 # Количество активаций
 @dp.message_handler(state=Activation_Quantity.quantity)
-async def check_trader_status(message: types.Message, state: FSMContext):
+async def activation_quantity(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['quantity'] = message.text
     s = await state.get_data()
@@ -64,7 +87,7 @@ async def check_trader_status(message: types.Message, state: FSMContext):
 
 # Длительность жизни ключа
 @dp.message_handler(state=Key_Duration.date)
-async def check_trader_status(message: types.Message, state: FSMContext):
+async def key_duration(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['date'] = message.text
         await state.finish()
