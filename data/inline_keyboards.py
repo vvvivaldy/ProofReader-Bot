@@ -59,5 +59,7 @@ ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='CTrader')
 ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='CUser')
 inl_kb_status.add(ikbtn1, ikbtn2)
 
-
-"""ДЛЯ ПЛАТНОГО ЮЗЕРА"""
+ikb_quantity = InlineKeyboardMarkup(row_width=2)
+infinity = InlineKeyboardButton(text='Бесконечное', callback_data='Einfinity')
+personal = InlineKeyboardButton(text='Персональное', callback_data='Epersonal')
+ikb_quantity.add(infinity).add(personal)

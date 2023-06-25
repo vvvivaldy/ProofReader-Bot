@@ -30,3 +30,10 @@ class EditApi(StatesGroup):
 
 class EditApiTrader(StatesGroup):
     api = State()
+
+class Key_Duration(StatesGroup):
+    date = State()
+
+
+class Activation_Quantity(StatesGroup):
+    quantity = State()
