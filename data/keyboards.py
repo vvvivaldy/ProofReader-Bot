@@ -58,7 +58,7 @@ kb_black_list.add(bl_btn1).add(bl_btn2, bl_btn3).add(bl_btn4)
 
 # Клавиатура трейдера
 kb_trader = ReplyKeyboardMarkup(resize_keyboard=True)
-trade1 = KeyboardButton('Статистика профиля')
+trade1 = KeyboardButton('Статистика Профиля')
 trade2 = KeyboardButton('Ключи')
 trade3 = KeyboardButton('Помощь')
 trade4 = KeyboardButton('Вкл/Выкл отслеживание')

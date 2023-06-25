@@ -63,3 +63,10 @@ ikb_quantity = InlineKeyboardMarkup(row_width=2)
 infinity = InlineKeyboardButton(text='Бесконечное', callback_data='Einfinity')
 personal = InlineKeyboardButton(text='Персональное', callback_data='Epersonal')
 ikb_quantity.add(infinity).add(personal)
+
+# Трейдер статистика
+ikb_trader_stat = InlineKeyboardMarkup(row_width=1)
+itsb1 = InlineKeyboardButton(text='Подписано людей',callback_data='Epeople')
+itsb2 = InlineKeyboardButton(text='Открытые сделки', callback_data='EOpenOrders')
+itsb3 = InlineKeyboardButton(text='История сделок',callback_data='EHistoryOrders')
+ikb_trader_stat.add(itsb1,itsb2,itsb3)

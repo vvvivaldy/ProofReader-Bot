@@ -23,6 +23,15 @@ async def trader_callbacks(callback: types.CallbackQuery,):
                                    parse_mode="HTML")
             await Activation_Quantity.quantity.set()
 
+        case 'people':
+            await callback.answer('Колво подписаных людей')
+
+        case 'OpenOrders':
+            await callback.answer('Открытые ордера')
+
+        case 'HistoryOrders':
+            await callback.answer('История ордеров')
+
 
 # Количество активаций
 @dp.message_handler(state=Activation_Quantity.quantity)
