@@ -14,7 +14,7 @@ async def trader_callbacks(callback: types.CallbackQuery,):
             conn.commit()
             cursor.close()
             await bot.send_message(chat_id=callback.from_user.id,
-                                   text="Напишите дату, до которой будет работать ключ в формате хх-хх-хххх или напишите '<b>Бессрочно</b>', чтобы ключ работал всегда.",
+                                   text="Напишите дату, до которой будет работать ключ в формате дд-мм-гггг или напишите '<b>Бессрочно</b>', чтобы ключ работал всегда.",
                                    parse_mode="HTML")
             await Key_Duration.date.set()
         case 'personal':
@@ -38,19 +38,28 @@ async def trader_callbacks(callback: types.CallbackQuery,):
 async def check_trader_status(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['quantity'] = message.text
-        await state.finish()
     s = await state.get_data()
     quantity = s["quantity"]
     conn, cursor = db_connect()
     with open('cache/keys.txt', 'r') as file:
         key = file.readline()
-    cursor.execute(f"UPDATE trader_keys SET quantity = {int(quantity)} WHERE key = '{key}';")
-    conn.commit()
-    cursor.close()
-    await bot.send_message(chat_id=message.from_user.id,
-                           text="Напишите дату, до которой будет работать ключ в формате хх-хх-хххх или напишите '<b>Бессрочно</b>', чтобы ключ работал всегда.",
-                           parse_mode="HTML")
-    await Key_Duration.date.set()
+    try:
+        cursor.execute(f"UPDATE trader_keys SET quantity = {int(quantity)} WHERE key = '{key}';")
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Напишите дату, до которой будет работать ключ в формате дд-мм-гггг или напишите '<b>Бессрочно</b>', чтобы ключ работал всегда.",
+                               parse_mode="HTML")
+        await state.reset_state()
+        await Key_Duration.date.set()
+    except ValueError:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы должны ввести кол-во активаций одним числом. Повторите попытку",
+                               reply_markup=kb_trader)
+        cursor.execute(f"DELETE FROM trader_keys WHERE key = '{key}'")
+        conn.commit()
+        cursor.close()
+        await state.reset_state()
 
 
 # Длительность жизни ключа
@@ -62,13 +71,40 @@ async def check_trader_status(message: types.Message, state: FSMContext):
     s = await state.get_data()
     date = s["date"]
     conn, cursor = db_connect()
-    print(date)
     with open('cache/keys.txt', 'r') as file:
         key = file.readline()
-    cursor.execute(f"UPDATE trader_keys SET duration = '{date}' WHERE key = '{key}';")
-    conn.commit()
-    cursor.close()
-    await bot.send_message(chat_id=message.from_user.id,
-                           text="<b>Ключ успешно добавлен!</b> Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
-                           parse_mode="HTML",
-                           reply_markup=kb_trader)
+    try:
+        if date.title() != "Бессрочно":
+            a = datetime.strptime(date, '%d-%m-%Y').date()
+            if a >= datetime.now().date():
+                cursor.execute(f"UPDATE trader_keys SET duration = '{date}' WHERE key = '{key}';")
+                await bot.send_message(chat_id=message.from_user.id,
+                                       text=f"Ваш ключ: <b>{key}!</b> Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
+                                       parse_mode="HTML",
+                                       reply_markup=kb_trader)
+            else:
+                cursor.execute(f"DELETE FROM trader_keys WHERE key = '{key}'")
+                await bot.send_message(chat_id=message.from_user.id,
+                                       text=f"Вы ввели некорректную дату. Повторите попытку",
+                                       parse_mode="HTML",
+                                       reply_markup=kb_trader)
+        else:
+            cursor.execute(f"UPDATE trader_keys SET duration = '{date.title()}' WHERE key = '{key}';")
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text=f"Ваш ключ: <b>{key}!</b> Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_trader)
+        conn.commit()
+        cursor.close()
+        await state.reset_state()
+
+    except ValueError:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы ввели дату в неправильным формате. Повторите попытку",
+                               parse_mode="HTML",
+                               reply_markup=kb_trader)
+        cursor.execute(f"DELETE FROM trader_keys WHERE key = '{key}'")
+        conn.commit()
+        cursor.close()
+        await state.reset_state()
+
