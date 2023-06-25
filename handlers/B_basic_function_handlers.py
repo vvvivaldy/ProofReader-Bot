@@ -14,11 +14,14 @@ async def start_func(message: types.Message):
                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
                                    parse_mode="HTML",
                                    reply_markup=kb_unreg)
+            cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
         else:
             await bot.send_message(chat_id=message.from_user.id,
                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
                                    parse_mode="HTML",
                                    reply_markup=kb_trader)
+            cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
+        conn.commit()
     except Exception as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
@@ -40,7 +43,7 @@ async def descr_func(message: types.Message):
 
 
 # хендлер инфо
-@dp.message_handler(Text(equals='Информация'))
+@dp.message_handler(Text(equals='Info'))
 async def info(message: types.Message):
     await message.answer(text=INFO, parse_mode='html',reply_markup=kb_free)
 

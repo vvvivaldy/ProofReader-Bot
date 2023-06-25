@@ -8,10 +8,10 @@ async def auth_func(message: types.Message):
     if paid_validate(message.from_user.id) or trader_validate(message.from_user.id):
         conn = sqlite3.connect('db/database.db')
         cursor = conn.cursor()
-        if not trader_validate(message.from_user.id):
-            cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
-        else:
+        if trader_validate(message.from_user.id):
             cursor.execute("SELECT status FROM traders WHERE trader_id = ?", (message.from_user.id,))
+        else:
+            cursor.execute("SELECT status FROM users WHERE user_id = ?", (message.from_user.id,))
         result = cursor.fetchone()
         if result[0] == "paid" or result[0] == "trader":
             await bot.send_message(chat_id=message.from_user.id,
