@@ -24,5 +24,6 @@ async def edit_api(message: types.Message):
 # Хендлер хуйни
 @dp.message_handler()
 async def unknown_func(message: types.Message):
+    print(message.__dict__)
     await bot.send_message(chat_id=message.from_user.id,
                            text="Мы не предусмотрели данный запрос. Повторите попытку.")
