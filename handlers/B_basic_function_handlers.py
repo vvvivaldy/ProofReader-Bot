@@ -40,7 +40,7 @@ async def descr_func(message: types.Message):
 
 
 # хендлер инфо
-@dp.message_handler(Text(equals='Info'))
+@dp.message_handler(Text(equals='Информация'))
 async def info(message: types.Message):
     await message.answer(text=INFO, parse_mode='html',reply_markup=kb_free)
 

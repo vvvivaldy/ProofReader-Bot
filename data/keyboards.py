@@ -10,7 +10,7 @@ b1 = KeyboardButton("Описание")
 b2 = KeyboardButton('Наши Трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
-b5 = KeyboardButton('Info')
+b5 = KeyboardButton('Информация')
 kb_free.add(b1,b3).add(b2,b5).add(b4)
 
 # Платная Клавиатура (Незареганный аккаунт)
@@ -56,9 +56,18 @@ bl_btn3 = KeyboardButton('Удалить из чс')
 bl_btn4 = KeyboardButton('Назад в админку')
 kb_black_list.add(bl_btn1).add(bl_btn2, bl_btn3).add(bl_btn4)
 
+# Клавиатура трейдера
 kb_trader = ReplyKeyboardMarkup(resize_keyboard=True)
 trade1 = KeyboardButton('Статистика')
 trade2 = KeyboardButton('Ключи')
 trade3 = KeyboardButton('Помощь')
 trade4 = KeyboardButton('Вкл/Выкл отслеживание')
 kb_trader.add(trade1, trade2).add(trade3, b_edit_api).add(trade4)
+
+# Клавиатура ключей
+kb_keys = ReplyKeyboardMarkup(resize_keyboard=True)
+key1 = KeyboardButton('Создать ключ')
+key2 = KeyboardButton('Удалить ключ')
+key3 = KeyboardButton('Вывод всех ключей')
+key4 = KeyboardButton('Вернуться')
+kb_keys.add(key1, key2).add(key3).add(key4)

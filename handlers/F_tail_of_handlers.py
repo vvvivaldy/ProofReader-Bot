@@ -8,13 +8,15 @@ async def edit_api(message: types.Message):
         conn , cursor = db_connect()
         res = cursor.execute(f'SELECT api_key,api_secret FROM users WHERE user_id = {message.from_user.id}').fetchone()
         await bot.send_message(chat_id=message.from_user.id,
-                               text=f'Ваш текущие \napi key: {decrypt_api(res[0])}\n\napi secret: {decrypt_api(res[1])}',
+                               text=f'Ваш текущие \napi key:|| {decrypt_api(res[0])} ||\n\napi secret: || {decrypt_api(res[1])} ||',
+                               parse_mode="MarkdownV2",
                                reply_markup=ik_edit_api)
     elif trader_validate(message.from_user.id):
         conn , cursor = db_connect()
         res = cursor.execute(f'SELECT api_key,api_secret FROM traders WHERE trader_id = {message.from_user.id}').fetchone()
         await bot.send_message(chat_id=message.from_user.id,
-                               text=f'Ваш текущие \napi key: {decrypt_api(res[0])}\n\napi secret: {decrypt_api(res[1])}',
+                               text=f'Ваш текущие \napi key:|| {decrypt_api(res[0])} ||\n\napi secret: || {decrypt_api(res[1])} ||',
+                               parse_mode="MarkdownV2",
                                reply_markup=ik_edit_api)
     else:
         await bot.send_message(chat_id=message.from_user.id,
