@@ -212,7 +212,6 @@ async def edit_price(message: types.Message):
 async def SetUserSubStatus(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['sub_status'] = message.text
-        await state.finish()
     s = await state.get_data()
     try:
         user = s['sub_status']
@@ -220,6 +219,8 @@ async def SetUserSubStatus(message: types.Message, state: FSMContext):
         await bot.send_message(chat_id=message.from_user.id,
                 text='Вы только что вводили этого пользователя. Повторите если вы не ошиблись',
                 reply_markup=kb_admin)
+        await state.reset_state()
+        await state.finish()
         return
     conn = sqlite3.connect('db/database.db')
     cur = conn.cursor()
@@ -229,6 +230,8 @@ async def SetUserSubStatus(message: types.Message, state: FSMContext):
         await bot.send_message(chat_id=message.from_user.id,
                         text='Неккоректные данные в введенном id',
                         reply_markup=kb_admin)
+        await state.reset_state()
+        await state.finish()
         return
     cur.close()
     if user.isdigit() and len(user_db)>0:
@@ -241,3 +244,5 @@ async def SetUserSubStatus(message: types.Message, state: FSMContext):
         await bot.send_message(chat_id=message.from_user.id,
                                 text='Введены неккоректные данные или такого юзера не существует в бд',
                                 reply_markup=kb_admin)
+    await state.reset_state()
+    await state.finish()

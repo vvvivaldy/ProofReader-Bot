@@ -170,22 +170,27 @@ async def admin_callbacks(callback: types.CallbackQuery,):
 async def check_trader_status(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['status'] = message.text
-        await state.finish()
     s = await state.get_data()
     user_id = s['status']
     if not all([i.isdigit() for i in user_id]):
         await bot.send_message(chat_id=message.from_user.id, text='Некорректные данные')
+        await state.reset_state()
         return
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     result = cursor.execute(f'SELECT * FROM users WHERE user_id = {user_id};').fetchall()
-    if result[0][1] != None:
+    if len(result) == 0:
+        await bot.send_message(chat_id=message.from_user.id,
+                         text='Такого пользователя нет')
+        await state.reset_state()
+        await state.finish()
+        return 
+    elif result[0][1] != None:
         api=(result[0][4][-5:],result[0][5][-5:])
     else:
         api=(None,None)
-    if result is not None:
-        await bot.send_message(chat_id=message.from_user.id,
-                                text=f'''id: {result[0][0]}\r\n
+    await bot.send_message(chat_id=message.from_user.id,
+                            text=f'''id: {result[0][0]}\r\n
 sub_start: {result[0][1]}\r\n
 sub_end: {result[0][2]}\r\n
 status: {result[0][3]}\r\n
@@ -193,48 +198,53 @@ api_key: {api[0]}\r\n
 api_secret: {api[1]}\r\n
 subsribsions: {result[0][6]}\r\n
 transaction: {result[0][7]}''')
-    else:
-        bot.send_message(chat_id=message.from_user.id,
-                         text='Такого пользователя нет')
+
     cursor.close()
+    await state.reset_state()
+    await state.finish()
 
 
 @dp.message_handler(state=TraderStatus.status)
 async def check_trader_status(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['status'] = message.text
-        await state.finish()
     s = await state.get_data()
     trader_id = s['status']
     if not all([i.isdigit() for i in trader_id]):
         await bot.send_message(chat_id=message.from_user.id, text='Некорректные данные')
+        await state.reset_state()
+        await state.finish()
         return
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     result = cursor.execute(f'SELECT * FROM traders WHERE trader_id = {trader_id};').fetchall()
-    if result[0][1] != None:
+    if len(result) == 0:
+        await bot.send_message(chat_id=message.from_user.id,
+                         text='Такого трейдера нет')
+        await state.reset_state()
+        await state.finish()
+        return 
+    elif result[0][1] != None:
         api=(result[0][1][-5:],result[0][2][-5:])
     else:
         api=(None,None)
-    if result is not None:
-        await bot.send_message(chat_id=message.from_user.id,
-                                text=f'''id: {result[0][0]}\r\n
+
+    await bot.send_message(chat_id=message.from_user.id,
+                            text=f'''id: {result[0][0]}\r\n
 api_key: {api[0]}\r\n
 api_secret: {api[1]}\r\n
 subscribers: {result[0][3]}\r\n
 history: {result[0][4]}\r\n
 trader_keys: {result[0][5]}''')
-    else:
-        bot.send_message(chat_id=message.from_user.id,
-                         text='Такого трейдера нет')
     cursor.close()
+    await state.reset_state()
+    await state.finish()
 
 
 @dp.message_handler(state=Bl_Id_Trader.id)
 async def add_trader(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['id'] = message.text
-        await state.finish()
     s = await state.get_data()
     try:
         trader_id = s['id']
@@ -252,21 +262,29 @@ async def add_trader(message: types.Message, state: FSMContext):
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Вы ввели не численное значение',
                                    reply_markup=kb_black_list)
+            await state.reset_state()
+            await state.finish()
+        await state.reset_state()
+        await state.finish()
     except KeyError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Вы недавно добавляли этого пользователя в чс. Повторите попытку для подтверждения.',
                                reply_markup=kb_black_list)
+        await state.reset_state()
+        await state.finish()
     except sqlite3.IntegrityError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Этот пользователь уже в черном списке.',
                                reply_markup=kb_black_list)
+        await state.reset_state()
+        await state.finish()
+    
 
 
 @dp.message_handler(state=Bl_Id_User.id)
 async def add_user(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['id'] = message.text
-        await state.finish()
     s = await state.get_data()
     try:
         trader_id = s['id']
@@ -284,14 +302,22 @@ async def add_user(message: types.Message, state: FSMContext):
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Вы ввели не численное значение',
                                    reply_markup=kb_black_list)
+            await state.reset_state()
+            await state.finish()
+        await state.reset_state()
+        await state.finish()
     except KeyError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Вы недавно добавляли этого пользователя в чс. Повторите попытку для подтверждения.',
                                reply_markup=kb_black_list)
+        await state.reset_state()
+        await state.finish()
     except sqlite3.IntegrityError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Этот пользователь уже в черном списке.',
                                reply_markup=kb_black_list)
+        await state.reset_state()
+        await state.finish()
 
 
 # Удаление
@@ -299,7 +325,6 @@ async def add_user(message: types.Message, state: FSMContext):
 async def set_api(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['id'] = message.text
-        await state.finish()
     s = await state.get_data()
     try:
         user_id = s['id']
@@ -324,14 +349,22 @@ async def set_api(message: types.Message, state: FSMContext):
                 await bot.send_message(chat_id=message.from_user.id,
                                        text='Пользователь не найден в чс.',
                                        reply_markup=kb_black_list)
+            await state.reset_state()
+            await state.finish()
         except ValueError as e:
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Вы ввели не численное значение',
                                    reply_markup=kb_black_list)
+            await state.reset_state()
+            await state.finish()
+        await state.reset_state()
+        await state.finish()
     except KeyError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Вы только что добавили этого пользователя. Повторите попытку для подтверждения.',
                                reply_markup=kb_black_list)
+        await state.reset_state()
+        await state.finish()
         
 
 async def set_user_status(conn,id,status):

@@ -33,7 +33,6 @@ async def auth_func(message: types.Message):
 async def set_api(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['api'] = message.text
-        await state.finish()
     s = await state.get_data()
     api_key = encrypt_api(s['api'].partition(' ')[0])
     api_secret = encrypt_api(s['api'].partition(' ')[2])
@@ -45,6 +44,8 @@ async def set_api(message: types.Message, state: FSMContext):
     except exceptions.InvalidRequestError as e:
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
         print(e)
+        await state.reset_state()
+        await state.finish()
         return
 
     conn = sqlite3.connect('db/database.db')
@@ -60,6 +61,8 @@ async def set_api(message: types.Message, state: FSMContext):
         await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_trader)
     conn.commit()
     cursor.close()
+    await state.reset_state()
+    await state.finish()
 
 
 # Хендлер Профиля

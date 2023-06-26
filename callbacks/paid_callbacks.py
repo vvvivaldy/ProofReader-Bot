@@ -44,7 +44,6 @@ async def set_api(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['api'] = message.text
         client_type = proxy._state.split(':')[0]
-        await state.finish()
     s = await state.get_data()
     try:
         api_key = encrypt_api(s['api'].partition(' ')[0])
@@ -52,6 +51,8 @@ async def set_api(message: types.Message, state: FSMContext):
     except KeyError:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Что-то пошло не так, ключи не обновились. Попробуйте снова')
+        await state.reset_state()
+        await state.finish()
         return
     try:
         test = HTTP(
@@ -60,6 +61,8 @@ async def set_api(message: types.Message, state: FSMContext):
         test.get_account_info()
     except:
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_reg)
+        await state.reset_state()
+        await state.finish()
         return
     
     conn = sqlite3.connect('db/database.db')
@@ -75,6 +78,8 @@ async def set_api(message: types.Message, state: FSMContext):
     conn.commit()
     cursor.close()
     await bot.send_message(message.chat.id, 'Ваши API изменены', reply_markup=kb_reg)
+    await state.reset_state()
+    await state.finish()
 
 
 
