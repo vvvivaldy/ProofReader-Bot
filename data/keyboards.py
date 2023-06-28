@@ -61,8 +61,13 @@ kb_trader = ReplyKeyboardMarkup(resize_keyboard=True)
 trade1 = KeyboardButton('Статистика Профиля')
 trade2 = KeyboardButton('Ключи')
 trade3 = KeyboardButton('Помощь')
-trade4 = KeyboardButton('Вкл/Выкл отслеживание')
+trade4 = KeyboardButton('Вкл отслеживание')
 kb_trader.add(trade1, trade2).add(trade3, b_edit_api).add(trade4)
+
+# Клавиатура трейдера
+kb_trader2 = ReplyKeyboardMarkup(resize_keyboard=True)
+trade5 = KeyboardButton('Выкл отслеживание')
+kb_trader2.add(trade1, trade2).add(trade3, b_edit_api).add(trade5)
 
 # Клавиатура ключей
 kb_keys = ReplyKeyboardMarkup(resize_keyboard=True)
