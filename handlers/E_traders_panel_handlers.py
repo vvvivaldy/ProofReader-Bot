@@ -37,7 +37,7 @@ async def go_stream(id):
     stream_websockets[f'stream_{id}'] = (ws,)
 
     await bot.send_message(chat_id=id,
-                           text='Отслеживание ON✔',
+                           text='Отслеживание ON✅',
                            reply_markup=kb_trader2)
     
 
