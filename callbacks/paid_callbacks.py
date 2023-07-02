@@ -45,6 +45,7 @@ async def set_api(message: types.Message, state: FSMContext):
         proxy['api'] = message.text
         client_type = proxy._state.split(':')[0]
     s = await state.get_data()
+    print(state.__dict__)
     try:
         api_key = encrypt_api(s['api'].partition(' ')[0])
         api_secret = encrypt_api(s['api'].partition(' ')[2])

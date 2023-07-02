@@ -68,9 +68,15 @@ async def keys(message: types.Message):
 @dp.message_handler(Text(equals='Вернуться'))
 async def back(message: types.Message):
     if trader_validate(message.from_user.id):
-        await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы вернулись в меню",
-                               reply_markup=kb_trader)
+        global stream_websockets
+        if f'stream_{message.from_user.id}' in stream_websockets:
+            await bot.send_message(chat_id=message.from_user.id,
+                                text="Вы вернулись в меню",
+                                reply_markup=kb_trader2)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                text="Вы вернулись в меню",
+                                reply_markup=kb_trader)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
