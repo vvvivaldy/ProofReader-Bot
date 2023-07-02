@@ -19,6 +19,8 @@ def tracking(ws,tmpstream = None, mode = 'off'):
         ws.exit()
     elif mode == 'on' and isinstance(tmpstream, TempStream):
         ws.order_stream(callback=tmpstream.handle_message)
+    else:
+        raise Exception('Вы передали какую-то хуйню в функцию tracking')
 
 
 async def go_stream(id):
@@ -34,7 +36,7 @@ async def go_stream(id):
     tmp = TempStream(id, stop_stream)
     tracking(ws, tmp, 'on')
     global stream_websockets
-    stream_websockets[f'stream_{id}'] = (ws,)
+    stream_websockets[f'stream_{id}'] = (ws, tmp)
 
     await bot.send_message(chat_id=id,
                            text='Отслеживание ON✅',
