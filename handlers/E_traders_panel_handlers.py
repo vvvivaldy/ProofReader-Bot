@@ -1,30 +1,55 @@
-import time
-
 from handlers.D_paid_function_handlers import *
 from callbacks.trader_callbacks import *
 
 
-def tracking(api_key, api_secret):
-    a = 0
-    ws = WebSocket(
-        testnet=False,
-        channel_type="private",
-        api_key=api_key,
-        api_secret=api_secret,
-    )
-    def handle_message(message):
+class TempStream:
+    def __init__(self, id, func):
+        self.id = id
+        self.func = func
+
+    def handle_message(self, message):
         print(message)
+        self.func(self.id)
+        print(requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                           f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}'))
+        
 
-    ws.order_stream(callback=handle_message)
-    # Вот здесь надо сделать проверку на выкл отслеживание но хз как и написать ws.exit()
-    while True:
-        @dp.message_handler(Text(equals='Выкл отслеживание'))
-        async def asd(message: types.Message):
-            ws.exit()
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="ВСЕ")
-        break
+def tracking(ws,tmpstream = None, mode = 'off'):
+    if mode == 'off':
+        ws.exit()
+    elif mode == 'on' and isinstance(tmpstream, TempStream):
+        ws.order_stream(callback=tmpstream.handle_message)
 
+
+async def go_stream(id):
+    conn, cursor = db_connect()
+    api_key, api_secret = cursor.execute(f'SELECT api_key,api_secret FROM traders WHERE trader_id = {id}').fetchall()[0]
+
+    ws = WebSocket(
+    testnet=False,
+    channel_type="private",
+    api_key=decrypt_api(api_key),
+    api_secret=decrypt_api(api_secret))
+
+    tmp = TempStream(id, stop_stream)
+    tracking(ws, tmp, 'on')
+    global stream_websockets
+    stream_websockets[f'stream_{id}'] = (ws,)
+
+    await bot.send_message(chat_id=id,
+                           text='Отслеживание ON✔',
+                           reply_markup=kb_trader2)
+    
+
+def stop_stream(id):
+    global stream_websockets
+    try:
+        ws = stream_websockets[f'stream_{id}'][0]
+    except:
+        return False
+    tracking(ws)
+    stream_websockets.pop(f'stream_{id}')
+    return True
 
 
 @dp.message_handler(Text(equals='Ключи'))
@@ -126,27 +151,24 @@ async def trader_help(message: types.Message):
 @dp.message_handler(Text(equals='Вкл отслеживание'))
 async def trader_help(message: types.Message):
     if trader_validate(message.from_user.id):
-        with open("cache/flag.txt", "r") as file:
-            flag = file.readline()
-        conn, cursor = db_connect()
-        data = cursor.execute(
-            f"SELECT api_key, api_secret FROM traders WHERE trader_id={message.from_user.id}").fetchone()
-        key, secret = decrypt_api(data[0]), decrypt_api(data[1])
-
-        if flag == "disable":
-            with open("cache/flag.txt", "w") as file:
-                file.write("enable")
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Началось",
-                                   reply_markup=kb_trader2)
-            tracking(api_key=key, api_secret=secret)
-        else:
-            with open("cache/flag.txt", "w") as file:
-                file.write("disable")
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Выключил",
-                                   reply_markup=kb_trader)
-
+        await go_stream(message.from_user.id)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Выкл отслеживание'))
+async def trader_help(message: types.Message):
+    if trader_validate(message.from_user.id):
+        if stop_stream(message.from_user.id):
+            await bot.send_message(chat_id=message.from_user.id,
+                           text='Отслеживание OFF❌',
+                           reply_markup=kb_trader)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                           text='Отслеживание и так выключено',
+                           reply_markup=kb_trader)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+    

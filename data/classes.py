@@ -1,5 +1,5 @@
 from aiogram.dispatcher.filters.state import StatesGroup, State
-
+from asyncio import gather, run
 
 class Auth(StatesGroup):
     api = State()
@@ -41,3 +41,4 @@ class Activation_Quantity(StatesGroup):
 
 class Key_Delete(StatesGroup):
     key = State()
+

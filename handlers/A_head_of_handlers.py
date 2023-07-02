@@ -5,7 +5,9 @@ dotenv.load_dotenv(dotenv.find_dotenv())
 
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
-admin_ids = [os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID')]
+admin_ids = (os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID'))
+stream_websockets = {}
+
 
 # проверка на трейдера
 def trader_validate(id: int) -> bool:

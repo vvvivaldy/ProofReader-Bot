@@ -41,10 +41,8 @@ async def set_api(message: types.Message, state: FSMContext):
             api_key=decrypt_api(api_key),
             api_secret=decrypt_api(api_secret))
         test.get_account_info()
-    except exceptions.InvalidRequestError as e:
+    except:
         await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_unreg)
-        print(e)
-        await state.reset_state()
         await state.finish()
         return
 
