@@ -26,10 +26,14 @@ async def paid_callback(callback: types.CallbackQuery):
                 cursor.execute("SELECT status FROM traders WHERE trader_id = ?", (callback.from_user.id,))
                 result = cursor.fetchone()
                 if result[0] == "trader":
-                    await bot.send_message(chat_id=callback.from_user.id,
-                                        text="Введите ваш <b>api_key</b> и <b>api_secret</b> через пробел: ",
-                                        parse_mode="HTML")
-                    await EditApiTrader.api.set()
+                    global stream_websockets
+                    if f'stream_{callback.from_user.id}' in stream_websockets: 
+                        await callback.answer(text="💥Сначала выключите отслеживание ордеров!")
+                    else:
+                        await bot.send_message(chat_id=callback.from_user.id,
+                                            text="Введите ваш <b>api_key</b> и <b>api_secret</b> через пробел: ",
+                                            parse_mode="HTML")
+                        await EditApiTrader.api.set()
                 else:
                     await bot.send_message(chat_id=callback.from_user.id,
                                         text="У вас нет статуса трейдера",
@@ -45,7 +49,11 @@ async def set_api(message: types.Message, state: FSMContext):
         proxy['api'] = message.text
         client_type = proxy._state.split(':')[0]
     s = await state.get_data()
-    print(state.__dict__)
+
+    if (await state.get_state()).split(':')[0] == 'EditApi': kb = kb_reg
+    else : kb = kb_trader
+
+
     try:
         api_key = encrypt_api(s['api'].partition(' ')[0])
         api_secret = encrypt_api(s['api'].partition(' ')[2])
@@ -61,7 +69,7 @@ async def set_api(message: types.Message, state: FSMContext):
             api_secret=decrypt_api(api_secret))
         test.get_account_info()
     except:
-        await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb_reg)
+        await bot.send_message(message.chat.id, 'Api key или Api secret указаны неверно. Повторите попытку', reply_markup=kb)
         await state.reset_state()
         await state.finish()
         return
@@ -78,7 +86,7 @@ async def set_api(message: types.Message, state: FSMContext):
         print('ЧТО_ТО ПОШЛО НЕ ТАК, ЭТОТ ОБРАБОТЧИК ПРИНИМАЕТ НЕ ТОЛЬКО EditApi и EditApiTrader!!!')
     conn.commit()
     cursor.close()
-    await bot.send_message(message.chat.id, 'Ваши API изменены', reply_markup=kb_reg)
+    await bot.send_message(message.chat.id, 'Ваши API изменены', reply_markup=kb)
     await state.reset_state()
     await state.finish()
 
