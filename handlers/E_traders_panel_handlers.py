@@ -8,10 +8,29 @@ class TempStream:
         self.func = func
 
     def handle_message(self, message):
-        print(message)
-        self.func(self.id)
-        print(requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                           f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}'))
+        ord = message["data"]
+        if len(ord) == 3:
+            if ord[1]["takeProfit"] != "":
+                text = f"""Монета: <b>{ord[1]["symbol"]}</b>
+Тип покупки: <b>{ord[1]["side"]}</b> 
+Количество: <b>{ord[1]["qty"]}</b>
+Цена: <b>{ord[1]["cumExecValue"]} $</b>
+TakeProfit: <b>{ord[1]["takeProfit"]} $</b>
+StopLoss: <b>{ord[1]["stopLoss"]} $</b>"""
+            else:
+                value = next((n["cumExecValue"] for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
+                text = f"""Монета: <b>{ord[1]["symbol"]}</b>
+Тип покупки: <b>{ord[1]["side"]}</b> 
+Количество: <b>{ord[1]["qty"]}</b>
+Цена: <b>{value} $</b>"""
+            self.func(self.id)
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                               f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+        else:
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                               f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
+        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                            f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
         
 
 def tracking(ws,tmpstream = None, mode = 'off'):
