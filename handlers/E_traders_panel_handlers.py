@@ -9,14 +9,20 @@ class TempStream:
 
     def handle_message(self, message):
         ord = message["data"]
+        print(ord)
         if len(ord) == 3:
-            if ord[1]["takeProfit"] != "":
-                text = f"""Монета: <b>{ord[1]["symbol"]}</b>
-Тип покупки: <b>{ord[1]["side"]}</b> 
-Количество: <b>{ord[1]["qty"]}</b>
-Цена: <b>{ord[1]["cumExecValue"]} $</b>
-TakeProfit: <b>{ord[1]["takeProfit"]} $</b>
-StopLoss: <b>{ord[1]["stopLoss"]} $</b>"""
+            value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
+            if ord[value]["takeProfit"] != "":
+                text = f"""Монета: <b>{ord[value]["symbol"]}</b>
+Тип покупки: <b>{ord[value]["side"]}</b> 
+Количество: <b>{ord[value]["qty"]}</b>
+Цена: <b>{ord[value]["cumExecValue"]} $</b>
+TakeProfit: <b>{ord[value]["takeProfit"]} $</b>
+StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
+                conn, cursor = db_connect()
+                cursor.execute(f"INSERT INTO trader_keys (trader_id, key) VALUES ('{message.from_user.id}', '{key}');")
+                conn.commit()
+                cursor.close()
             else:
                 value = next((n["cumExecValue"] for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
                 text = f"""Монета: <b>{ord[1]["symbol"]}</b>
