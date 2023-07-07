@@ -5,3 +5,6 @@
 /handlers/__pycache__/
 /callbacks/__pycache__/
 /db/*.db
+/*
+!/db/database.db
+!/.gitignore
