@@ -20,15 +20,27 @@ class TempStream:
 TakeProfit: <b>{ord[value]["takeProfit"]} $</b>
 StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                 conn, cursor = db_connect()
-                cursor.execute(f"INSERT INTO trader_keys (trader_id, key) VALUES ('{message.from_user.id}', '{key}');")
+                cursor.execute(f"INSERT INTO orders (order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
+                               f" status, open_price, close_price, profit, qty) VALUES ('{message['id']}', "
+                               f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
+                               f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '{ord[value]['qty']}');")
                 conn.commit()
                 cursor.close()
             else:
-                value = next((n["cumExecValue"] for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
+                price = next((n["cumExecValue"] for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
+                conn, cursor = db_connect()
+                data = cursor.execute(f"SELECT qty, open_price FROM orders WHERE trade_pair = '{ord[value]['symbol']}' AND trader_id = '{self.id}' AND status = 'open'").fetchone()
+                profit = round(float(price) * float(data[0]) - float(data[0]) * float(data[1]), 5)
+                cursor.execute(f'''UPDATE orders SET status = "closed",
+                                profit = "{profit}", close_price = "{price}" WHERE trade_pair = "{ord[value]['symbol']}" AND 
+                                trader_id = "{self.id}" AND status = "open"''')
+                conn.commit()
+                cursor.close()
                 text = f"""Монета: <b>{ord[1]["symbol"]}</b>
-Тип покупки: <b>{ord[1]["side"]}</b> 
-Количество: <b>{ord[1]["qty"]}</b>
-Цена: <b>{value} $</b>"""
+Тип покупки: <b>{ord[value]["side"]}</b> 
+Количество: <b>{ord[value]["qty"]}</b>
+Цена: <b>{price} $</b>
+Профит: <b>{profit} $</b>"""
             self.func(self.id)
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
