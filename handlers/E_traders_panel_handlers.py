@@ -6,12 +6,21 @@ class TempStream:
     def __init__(self, id, func):
         self.id = id
         self.func = func
+        self.orders = {}
 
     def handle_message(self, message):
         ord = message["data"]
-        print(ord)
+        for i in ord:
+            for k,v in i.items():
+                print(f'{k}: {v}')
+            print('------')
+        print('-----------------------------------------')
         if len(ord) == 3:
+
             value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
+            tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
+            sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
+
             if ord[value]["takeProfit"] != "":
                 text = f"""Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b> 
@@ -19,34 +28,49 @@ class TempStream:
 Цена: <b>{ord[value]["cumExecValue"]} $</b>
 TakeProfit: <b>{ord[value]["takeProfit"]} $</b>
 StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
+                
                 conn, cursor = db_connect()
-                cursor.execute(f"INSERT INTO orders (order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                               f" status, open_price, close_price, profit, qty) VALUES ('{message['id']}', "
+                cursor.execute(f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
+                               f" status, open_price, close_price, close_order_id, profit, qty) VALUES ('{ord[value]['orderId']}', "
+                               f"'{tp['orderId']}', '{sl['orderId']}' ,"
                                f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
-                               f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '{ord[value]['qty']}');")
+                               f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}');")
                 conn.commit()
                 cursor.close()
+
             else:
-                price = next((n["cumExecValue"] for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
+
+                close_order = next((n for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
+                price = close_order['cumExecValue']
+
                 conn, cursor = db_connect()
                 data = cursor.execute(f"SELECT qty, open_price FROM orders WHERE trade_pair = '{ord[value]['symbol']}' AND trader_id = '{self.id}' AND status = 'open'").fetchone()
                 profit = round(float(price) * float(data[0]) - float(data[0]) * float(data[1]), 5)
                 cursor.execute(f'''UPDATE orders SET status = "closed",
-                                profit = "{profit}", close_price = "{price}" WHERE trade_pair = "{ord[value]['symbol']}" AND 
+                                profit = "{profit}", close_price = "{price}", close_order_id = "{close_order['orderId']}" WHERE trade_pair = "{ord[value]['symbol']}" AND 
                                 trader_id = "{self.id}" AND status = "open"''')
                 conn.commit()
                 cursor.close()
+
                 text = f"""Монета: <b>{ord[1]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b> 
 Количество: <b>{ord[value]["qty"]}</b>
 Цена: <b>{price} $</b>
 Профит: <b>{profit} $</b>"""
-            self.func(self.id)
+                
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+            
         else:
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
+            
+        self.func(self.id)
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
+        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                             f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
         
