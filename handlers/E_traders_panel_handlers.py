@@ -6,51 +6,85 @@ class TempStream:
     def __init__(self, id, func):
         self.id = id
         self.func = func
-        self.orders = {}
 
     def handle_message(self, message):
         ord = message["data"]
-        for i in ord:
-            for k,v in i.items():
-                print(f'{k}: {v}')
-            print('------')
-        print('-----------------------------------------')
-        if len(ord) == 3:
+        conn, cursor = db_connect()
+        existence_validate = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()[0])
 
-            value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
-            tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
-            sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
+        if existence_validate:
+            stop_orders = cursor.execute(f"SELECT tp_order_id, sl_order_id FROM orders WHERE trader_id = '{self.id}' AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()
+            api_key, api_secret = cursor.execute(f'SELECT api_key,api_secret FROM traders WHERE trader_id = {self.id}').fetchall()[0]
+            session = HTTP(
+                testnet=False,
+                api_key=decrypt_api(api_key),
+                api_secret=decrypt_api(api_secret),
+            )
+            tp_status = session.get_order_history(
+                category="linear",
+                orderId = stop_orders[0])['result']['list'][0]['orderStatus']
+            sl_status = session.get_order_history(
+                category="linear",
+                orderId = stop_orders[1])['result']['list'][0]['orderStatus']
+            
+            if tp_status == 'Filled' or sl_status == 'Filled':
+                so_status = 'Filled'
+            elif tp_status == 'Triggered' or sl_status == 'Triggered':
+                so_status = 'Triggered'
+            elif tp_status == 'Untriggered' or sl_status == 'Untriggered':
+                so_status = 'Untriggered'
+            elif tp_status == 'Deactivated' or sl_status == 'Deactivated':
+                so_status = 'Deactivated'
 
-            if ord[value]["takeProfit"] != "":
-                text = f"""Монета: <b>{ord[value]["symbol"]}</b>
-Тип покупки: <b>{ord[value]["side"]}</b> 
+            print(so_status)
+
+
+        def create_order_in_object(value):
+            if len(ord) == 3:
+                tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
+                sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
+
+                if ord[value]["takeProfit"] != "":
+                    text = f"""Монета: <b>{ord[value]["symbol"]}</b>
+Тип покупки: <b>{ord[value]["side"]}</b>
 Количество: <b>{ord[value]["qty"]}</b>
 Цена: <b>{ord[value]["cumExecValue"]} $</b>
 TakeProfit: <b>{ord[value]["takeProfit"]} $</b>
 StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
-                
-                conn, cursor = db_connect()
+                else:
+                    requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                f'/sendMessage?chat_id={self.id}&text=Напишите в тех поддержку об ошибке 908 и пришлите скриншот действий с ботом')
+                    return
+                    
                 cursor.execute(f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                               f" status, open_price, close_price, close_order_id, profit, qty) VALUES ('{ord[value]['orderId']}', "
-                               f"'{tp['orderId']}', '{sl['orderId']}' ,"
-                               f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
-                               f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}');")
+                            f" status, open_price, close_price, close_order_id, profit, qty) VALUES ('{ord[value]['orderId']}', "
+                            f"'{tp['orderId']}', '{sl['orderId']}' ,"
+                            f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
+                            f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}');")
                 conn.commit()
-                cursor.close()
 
             else:
-
+                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
+                return
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                    f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+                
+        if not existence_validate:
+            value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
+            create_order_in_object(value)
+        else :
+            if so_status == 'Deactivated':
+                value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
                 close_order = next((n for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
                 price = close_order['cumExecValue']
 
-                conn, cursor = db_connect()
                 data = cursor.execute(f"SELECT qty, open_price FROM orders WHERE trade_pair = '{ord[value]['symbol']}' AND trader_id = '{self.id}' AND status = 'open'").fetchone()
                 profit = round(float(price) * float(data[0]) - float(data[0]) * float(data[1]), 5)
                 cursor.execute(f'''UPDATE orders SET status = "closed",
                                 profit = "{profit}", close_price = "{price}", close_order_id = "{close_order['orderId']}" WHERE trade_pair = "{ord[value]['symbol']}" AND 
                                 trader_id = "{self.id}" AND status = "open"''')
                 conn.commit()
-                cursor.close()
 
                 text = f"""Монета: <b>{ord[1]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b> 
@@ -58,19 +92,31 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 Цена: <b>{price} $</b>
 Профит: <b>{profit} $</b>"""
                 
-            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                               f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
-            
-        else:
-            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                               f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
-            
+                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                    f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+
+            #FIXME: добавить клавиатуру в два нижних элифа
+            #FIXME: Поработать с антригер и тригер
+
+            elif so_status == 'Untriggered':
+                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                f'/sendMessage?chat_id={self.id}&text=У ваших подписчиков в данный момент есть открытый вами ордер на данной валютной паре. Вы хотите им отправить им ТОЛЬКО ЧТО СОЗДАННЫЙ ВАМИ ордер, или не будете?')
+            elif so_status == 'Triggered':
+                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                f'/sendMessage?chat_id={self.id}&text=У ваших подписчиков в данный момент сработал один из СТОП-ордеров и он ждет своего исполнения')
+            elif so_status == 'Filled':
+                print('Filled успешно сработало')
+                if so_status == tp_status:
+                    cursor.execute(f'UPDATE orders SET status = "closed", close_order_id = "{stop_orders[0]}" WHERE trader_id = "{self.id}" AND trade_pair = "{ord[0]["symbol"]}" AND status = "open" ')
+                else:
+                    cursor.execute(f'UPDATE orders SET status = "closed", close_order_id = "{stop_orders[0]}" WHERE trader_id = "{self.id}" AND trade_pair = "{ord[1]["symbol"]}" AND status = "open" ')
+
+                conn.commit()
+                value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
+                create_order_in_object(value)
+
+        cursor.close()
         self.func(self.id)
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-        print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                             f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
         
