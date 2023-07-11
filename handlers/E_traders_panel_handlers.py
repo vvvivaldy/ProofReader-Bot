@@ -107,12 +107,19 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
             elif so_status == 'Filled':
                 print('Filled успешно сработало')
                 if so_status == tp_status:
-                    cursor.execute(f'UPDATE orders SET status = "closed", close_order_id = "{stop_orders[0]}" WHERE trader_id = "{self.id}" AND trade_pair = "{ord[0]["symbol"]}" AND status = "open" ')
+                    who = stop_orders[0]
                 else:
-                    cursor.execute(f'UPDATE orders SET status = "closed", close_order_id = "{stop_orders[0]}" WHERE trader_id = "{self.id}" AND trade_pair = "{ord[1]["symbol"]}" AND status = "open" ')
+                   who = stop_orders[1]
+                value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
+                close_order = next((n for n in ord if "cumExecValue" in n and n["cumExecValue"] != "0"), None)
+                data = cursor.execute(f"SELECT qty, open_price FROM orders WHERE trade_pair = '{ord[value]['symbol']}' AND trader_id = '{self.id}' AND status = 'open'").fetchone()
+                price = close_order['cumExecValue']
+                profit = round(float(price) * float(data[0]) - float(data[0]) * float(data[1]), 5)
+                cursor.execute(f'''UPDATE orders SET status = "closed",
+                                profit = "{profit}", close_price = "{price}", close_order_id = "{who}" WHERE trade_pair = "{ord[value]['symbol']}" AND 
+                                trader_id = "{self.id}" AND status = "open"''')
 
                 conn.commit()
-                value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
                 create_order_in_object(value)
 
         cursor.close()
