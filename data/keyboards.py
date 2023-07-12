@@ -75,3 +75,4 @@ key2 = KeyboardButton('Удалить ключ')
 key3 = KeyboardButton('Вывод всех ключей')
 key4 = KeyboardButton('Вернуться')
 kb_keys.add(key1, key2).add(key3).add(key4)
+

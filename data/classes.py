@@ -42,4 +42,3 @@ class Activation_Quantity(StatesGroup):
 
 class Key_Delete(StatesGroup):
     key = State()
-

@@ -70,3 +70,9 @@ itsb1 = InlineKeyboardButton(text='Подписано людей',callback_data=
 itsb2 = InlineKeyboardButton(text='Открытые сделки', callback_data='EOpenOrders')
 itsb3 = InlineKeyboardButton(text='История сделок',callback_data='EHistoryOrders')
 ikb_trader_stat.add(itsb1,itsb2,itsb3)
+
+
+kb_order = InlineKeyboardMarkup(row_width=2)
+k1 = InlineKeyboardButton(text='Отправить', callback_data='EpushOrder')
+k2 = InlineKeyboardButton(text='Отмена', callback_data='EcancelOrder')
+kb_order.add(k1).add(k2)
