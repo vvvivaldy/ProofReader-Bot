@@ -67,8 +67,6 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
             
             if tp_status == 'Filled' or sl_status == 'Filled':
                 so_status = 'Filled'
-            elif tp_status == 'Triggered' or sl_status == 'Triggered':
-                so_status = 'Triggered'
             elif tp_status == 'Deactivated' or sl_status == 'Deactivated':
                 so_status = 'Deactivated'
             elif tp_status == 'Untriggered' or sl_status == 'Untriggered':
@@ -108,14 +106,6 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                 cursor.close()
                 self.func(self.id)
                 return
-                
-            elif so_status == 'Triggered':
-                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                f'/sendMessage?chat_id={self.id}&text=У ваших подписчиков в данный момент сработал один из СТОП-ордеров и он ждет своего исполнения&reply_markup={kb_order}')
-                # cursor.close()
-                # self.func(self.id)
-                # return
-                
 
             elif so_status == 'Filled':
                 print('Filled успешно сработало')
