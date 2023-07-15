@@ -10,29 +10,33 @@ stream_websockets = {}
 
 
 # проверка на трейдера
-def trader_validate(id: int) -> bool:
+def trader_validate(id: int, mode = True) -> bool:
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     try:
         res = cursor.execute(f'SELECT status FROM traders WHERE trader_id={id};').fetchone()[0]
         if res == 'trader':
             return True
-        else:
-            return False
+        elif res == 'block' and mode:
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                            f'/sendMessage?chat_id={id}&text=Вы присутствуете в черном списке. Доступ запрещен.&reply_markup={ReplyKeyboardRemove()}')
+        return False
     except:
         return False
 
 
 # Проверка на подписку
-def paid_validate(id: int) -> bool:
+def paid_validate(id: int, mode = True) -> bool:
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     try:
         res = cursor.execute(f'SELECT status FROM users WHERE user_id={id};').fetchone()[0]
         if res == 'paid':
             return True
-        else:
-            return False
+        elif res == 'block' and mode:
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                            f'/sendMessage?chat_id={id}&text=Вы присутствуете в черном списке. Доступ запрещен.&reply_markup={ReplyKeyboardRemove()}')
+        return False
     except:
         return False
 

@@ -6,31 +6,37 @@ from callbacks.basic_callbacks import *
 async def start_func(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    try:
-        traders = cursor.execute('SELECT trader_id, api_key FROM traders;').fetchall()
-        idx = [*map(lambda x: x[0], traders)].index(message.from_user.id)
-        if traders[idx][1] is None or traders[idx][1] == '':
+    pas = trader_validate(message.from_user.id, mode=False) or paid_validate(message.from_user.id, mode=False)
+    if pas:
+        try:
+            traders = cursor.execute('SELECT trader_id, api_key FROM traders;').fetchall()
+            idx = [*map(lambda x: x[0], traders)].index(message.from_user.id)
+            if traders[idx][1] is None or traders[idx][1] == '':
+                await bot.send_message(chat_id=message.from_user.id,
+                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
+                                    parse_mode="HTML",
+                                    reply_markup=kb_unreg)
+                cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
+            else:
+                await bot.send_message(chat_id=message.from_user.id,
+                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
+                                    parse_mode="HTML",
+                                    reply_markup=kb_trader)
+                cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
+            conn.commit()
+        except Exception as e:
             await bot.send_message(chat_id=message.from_user.id,
-                                   text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
-                                   parse_mode="HTML",
-                                   reply_markup=kb_unreg)
-            cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
-        else:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
-                                   parse_mode="HTML",
-                                   reply_markup=kb_trader)
-            cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
-        conn.commit()
-    except Exception as e:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                    f"Подробнее ты можешь узнать нажав  "
-                                    f"на кнопку \"Описание\"",
-                               reply_markup=kb_free)
-        # Подключение к бд
-        info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
-        await db_validate(cursor, conn, message, info)
+                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                        f"Подробнее ты можешь узнать нажав  "
+                                        f"на кнопку \"Описание\"",
+                                reply_markup=kb_free)
+            # Подключение к бд
+            info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
+            await db_validate(cursor, conn, message, info)
+    else:
+        await bot.send_message(chat_id=message.from_user.id, 
+                               text='Вы присутствуете в черном списке. Доступ запрещен.', 
+                               reply_markup=ReplyKeyboardRemove())
     await message.delete()
 
 
