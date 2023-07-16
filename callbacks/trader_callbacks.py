@@ -24,8 +24,10 @@ async def trader_callbacks(callback: types.CallbackQuery,):
             await Activation_Quantity.quantity.set()
 
         case 'people':
-            await callback.answer('Колво подписаных людей')
-
+            conn, cursor = db_connect()
+            count = cursor.execute(f'SELECT count(*) FROM users WHERE subscriptions LIKE "{"%"+str(callback.from_user.id)+"%"}"').fetchone()[0]
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text=f'Кол-во ваших подписчиков: {count}')
         case 'OpenOrders':
             await callback.answer('Открытые ордера')
 
@@ -113,7 +115,7 @@ async def key_duration(message: types.Message, state: FSMContext):
             if a >= datetime.now().date():
                 cursor.execute(f"UPDATE trader_keys SET duration = '{date}' WHERE key = '{key}';")
                 await bot.send_message(chat_id=message.from_user.id,
-                                       text=f"Ваш ключ: <b>{key}!</b> Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
+                                       text=f"Ваш ключ: <b>{key}</b> ! Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
                                        parse_mode="HTML",
                                        reply_markup=kb_trader)
             else:
@@ -125,7 +127,7 @@ async def key_duration(message: types.Message, state: FSMContext):
         else:
             cursor.execute(f"UPDATE trader_keys SET duration = '{date.title()}' WHERE key = '{key}';")
             await bot.send_message(chat_id=message.from_user.id,
-                                   text=f"Ваш ключ: <b>{key}!</b> Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
+                                   text=f"Ваш ключ: <b>{key}</b> ! Отправьте его пользователям, чтобы они смогли отслеживать ваши действия.",
                                    parse_mode="HTML",
                                    reply_markup=kb_trader)
         conn.commit()
