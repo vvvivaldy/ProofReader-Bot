@@ -32,6 +32,7 @@ async def trader_callbacks(callback: types.CallbackQuery,):
             conn, cursor = db_connect()
             orders = cursor.execute(f'SELECT order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, open_price, qty FROM orders WHERE trader_id = {callback.from_user.id} AND status = "open"').fetchall()
             res = ''
+            kb_trader = true_kb(callback.from_user.id)
             for item in orders:
                 res+=f"""
 Базовый ордер: {item[0]}
@@ -55,6 +56,7 @@ SL ордер: {item[2]}
             return
         
         case 'HistoryOrders':
+            kb_trader = true_kb(callback.from_user.id)
             conn, cursor = db_connect()
             orders = cursor.execute(f'SELECT * FROM orders WHERE trader_id = {callback.from_user.id} AND status = "close"').fetchall()
             if len(orders) > 10:
@@ -106,6 +108,7 @@ async def key_delete(message: types.Message, state: FSMContext):
     key = s["key"]
     conn, cursor = db_connect()
     valid = cursor.execute(f"SELECT trader_id FROM trader_keys WHERE key = '{key}'").fetchone()
+    kb_trader = true_kb(message.from_user.id)
     if valid is not None:
         cursor.execute(f"DELETE FROM trader_keys WHERE key = '{key}'")
         conn.commit()
@@ -128,6 +131,7 @@ async def activation_quantity(message: types.Message, state: FSMContext):
     s = await state.get_data()
     quantity = s["quantity"]
     conn, cursor = db_connect()
+    kb_trader = true_kb(message.from_user.id)
     with open('cache/keys.txt', 'r') as file:
         key = file.readline()
     try:
@@ -156,6 +160,7 @@ async def key_duration(message: types.Message, state: FSMContext):
         proxy['date'] = message.text
         await state.finish()
     s = await state.get_data()
+    kb_trader = true_kb(message.from_user.id)
     date = s["date"]
     conn, cursor = db_connect()
     with open('cache/keys.txt', 'r') as file:

@@ -8,6 +8,13 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 admin_ids = (os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID'))
 stream_websockets = {}
 
+# проверка на нужнуб клавиатуру трейдера
+def true_kb(id: int) -> ReplyKeyboardMarkup:
+    global stream_websockets
+    if f'stream_{id}' in stream_websockets:
+        return kb_trader2
+    return kb_trader
+        
 
 # проверка на трейдера
 def trader_validate(id: int, mode = True) -> bool:

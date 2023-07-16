@@ -4,7 +4,7 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters import Text
 from aiogram.types.message import ContentType
 from aiogram.dispatcher import FSMContext
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove, ReplyKeyboardMarkup
 
 from data.config import DESCR, INSTRUCT, PREDOSTR, INFO, TRADER_HELP
 from data.keyboards import kb_free, kb_instruct, kb_reg, kb_unreg, kb_profile, kb_admin, kb_black_list, kb_trader, kb_keys, kb_trader2

@@ -262,6 +262,7 @@ async def prof_stat(message: types.Message):
 @dp.message_handler(Text(equals='Помощь'))
 async def trader_help(message: types.Message):
     if trader_validate(message.from_user.id):
+        kb_trader = true_kb(message.from_user.id)
         await bot.send_message(chat_id=message.from_user.id,
                                text=TRADER_HELP,
                                parse_mode='html',
