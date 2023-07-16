@@ -29,10 +29,61 @@ async def trader_callbacks(callback: types.CallbackQuery,):
             await bot.send_message(chat_id=callback.from_user.id,
                                    text=f'Кол-во ваших подписчиков: {count}')
         case 'OpenOrders':
-            await callback.answer('Открытые ордера')
-
+            conn, cursor = db_connect()
+            orders = cursor.execute(f'SELECT order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, open_price, qty FROM orders WHERE trader_id = {callback.from_user.id} AND status = "open"').fetchall()
+            res = ''
+            for item in orders:
+                res+=f"""
+Базовый ордер: {item[0]}
+TP ордер: {item[1]}
+SL ордер: {item[2]}
+Валютная пара: {item[3]}
+Уровень TP: {item[4]}
+Уровень SL: {item[5]}
+Уровень открытия базового ордера: {item[6]}
+Кол-во монет: {item[7]}
+----------------------
+"""
+            if res != '':
+                await bot.send_message(chat_id=callback.from_user.id,
+                                    text=res,
+                                    reply_markup=kb_trader)
+            else:
+                await bot.send_message(chat_id=callback.from_user.id,
+                                    text='У вас нет открытых ордеров,которые были отслежены',
+                                    reply_markup=kb_trader)
+            return
+        
         case 'HistoryOrders':
-            await callback.answer('История ордеров')
+            conn, cursor = db_connect()
+            orders = cursor.execute(f'SELECT * FROM orders WHERE trader_id = {callback.from_user.id} AND status = "close"').fetchall()
+            if len(orders) > 10:
+                orders = orders[-11:]
+            res = ''
+            for item in orders:
+                res+=f"""
+Базовый ордер: {item[0]}
+TP ордер: {item[1]}
+SL ордер: {item[2]}
+Валютная пара: {item[3]}
+Уровень TP: {item[4]}
+Уровень SL: {item[5]}
+Уровень открытия базового ордера: {item[9]}
+Уровень закрытия ордера: {item[10]}
+Ордер закрытия: {item[11]}
+Профит от сделки: {item[12]}
+Кол-во монет: {item[13]}
+----------------------
+"""
+            if res != '':
+                await bot.send_message(chat_id=callback.from_user.id,
+                                    text=res,
+                                    reply_markup=kb_trader)
+            else:
+                await bot.send_message(chat_id=callback.from_user.id,
+                                    text='У вас нет открытых ордеров,которые были отслежены.',
+                                    reply_markup=kb_trader)
+            return
 
         case 'pushOrder':
             global stream_websockets
