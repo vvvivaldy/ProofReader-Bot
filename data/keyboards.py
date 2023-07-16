@@ -10,7 +10,7 @@ b1 = KeyboardButton("Описание")
 b2 = KeyboardButton('Наши Трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
-b5 = KeyboardButton('Информация')
+b5 = KeyboardButton('Info')
 kb_free.add(b1,b3).add(b2,b5).add(b4)
 
 # Платная Клавиатура (Незареганный аккаунт)
