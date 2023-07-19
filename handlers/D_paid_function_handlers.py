@@ -45,6 +45,8 @@ async def key_checker(message: types.Message, state: FSMContext):
         if i[0] == key:
             trader_id1 = cursor.execute(f"SELECT trader_id FROM trader_keys WHERE key = '{key}'").fetchone()
             cursor.execute(f'UPDATE users SET trader_sub_id = "{trader_id1[0]}" WHERE user_id = {message.from_user.id}')
+            subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1[0]}'").fetchone()
+            cursor.execute(f"""UPDATE traders SET trader_subs = '{subs[0]}' || ' ' || '{message.from_user.id}' WHERE trader_id = '{trader_id1[0]}'""")
             cursor.execute(f"""UPDATE trader_keys SET quantity = quantity + 1 WHERE key = '{key}'""")
             await bot.send_message(chat_id=message.from_user.id,
                            text = "Вы успешно подписались на трейдера!"
