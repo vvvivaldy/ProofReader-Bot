@@ -61,7 +61,19 @@ async def descr_func(message: types.Message):
 # хендлер инфо
 @dp.message_handler(Text(equals='Info'))
 async def info(message: types.Message):
-    await message.answer(text=INFO, parse_mode='html',reply_markup=kb_free)
+    _, cursor = db_connect()
+    if paid_validate(message.from_user.id):
+        kb = kb_reg
+
+    elif trader_validate(message.from_user.id):
+        global stream_websockets
+        if stream_websockets[f'stream_{message.from_user.id}']:
+            kb = kb_trader2
+        else:
+            kb = kb_trader
+    else:
+        kb = kb_free
+    await message.answer(text=INFO, parse_mode='html',reply_markup=kb)
 
 
 # Хендлер Инструкции
@@ -191,34 +203,25 @@ async def menu_func(message: types.Message):
     cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
     result = cursor.fetchone()
     if result is not None:
-        if result[0] == "free" or 'block':
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Вы вернулись в меню",
-                                   parse_mode="HTML",
-                                   reply_markup=kb_free)
+        if result[0] in ("free",'block'):
+            kb = kb_free
         elif result[0] == "paid" and result[1] != "":
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Вы вернулись в меню",
-                                   parse_mode="HTML",
-                                   reply_markup=kb_reg)
+            kb = kb_reg
         elif result[0] == "paid" and result[1] == "":
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Вы вернулись в меню",
-                                   parse_mode="HTML",
-                                   reply_markup=kb_unreg)
+            kb = kb_unreg
     else:
-        data = cursor.execute("SELECT api_key FROM traders WHERE trader_id = ?", (message.from_user.id,)).fetchone()
-        if data[0] is not None:
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Вы вернулись в меню",
-                                   parse_mode="HTML",
-                                   reply_markup=kb_reg)
+        data = cursor.execute("SELECT api_key, status FROM traders WHERE trader_id = ?", (message.from_user.id,)).fetchone()
+        if data[1] == 'block':
+            kb = kb_free
+        elif data[0] is not None:
+            kb = kb_reg
         else:
-            await bot.send_message(chat_id=message.from_user.id,
+            kb = kb_unreg
+
+    await bot.send_message(chat_id=message.from_user.id,
                                    text="Вы вернулись в меню",
                                    parse_mode="HTML",
-                                   reply_markup=kb_unreg)
-
+                                   reply_markup=kb)
 
 
 # Хендлер Предостережения
@@ -227,7 +230,6 @@ async def predostr_func(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
                            text=PREDOSTR,
                            parse_mode="HTML")
-
 
 
 # Хендлер Пользование ботом
