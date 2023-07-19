@@ -71,7 +71,11 @@ async def descr_func(message: types.Message):
                            text=INSTRUCT,
                            parse_mode="HTML",
                            reply_markup=kb_instruct)
+    
 
+    
+    
+    
 
 # хендлер вывода трейдеров
 @dp.message_handler(Text(equals='Наши Трейдеры'))
@@ -177,7 +181,7 @@ async def successfull_payment(message: types.Message):
     conn.commit()
     cursor.close()
 
-
+#Вывод подписанных
 
 # Хендлер Возращения в меню
 @dp.message_handler(Text(equals="Назад"))
