@@ -142,7 +142,8 @@ async def successfull_payment(message: types.Message):
     cursor.execute(f"""INSERT or REPLACE into purchase_history VALUES ('{date_start}', '{current_time}', '{message.from_user.id}', '{date1}', '{message.successful_payment.total_amount // 100}', '{tranzaktion}')""")
     cursor.execute(f"""Update users set status = "paid", subscribe_start = "{date_start}", 
                        subscribe_finish = "{date_fininsh}", 
-                       [transaction] = "{tranzaktion}" 
+                       [transaction] = "{tranzaktion}",
+                        trader_sub_id = "0",
                        where user_id = {message.from_user.id};""")
 
     conn.commit()
