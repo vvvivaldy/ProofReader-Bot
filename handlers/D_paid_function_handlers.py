@@ -23,7 +23,39 @@ async def auth_func(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                            text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
-
+# Хендлер механизма подписки
+@dp.message_handler(Text(equals="Ввести ключ трейдера"))
+async def trader_keyy(message: types.Message, state: FSMContext) -> None:
+    await bot.send_message(chat_id=message.from_user.id,
+                           text = "Введите <b>ключ трейдера</b>",
+                           parse_mode="HTML")
+    await state.set_state(TraderKey.trader_key)
+    
+@dp.message_handler(state=TraderKey.trader_key)
+async def key_checker(message: types.Message, state: FSMContext):
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    traders_keys = cursor.execute('SELECT key FROM trader_keys').fetchmany(100)
+    key = message.text
+    flag = False
+    for i in traders_keys:
+        if i[0] == key:
+            trader_id = cursor.execute(f"SELECT trader_id FROM trader_keys WHERE key = '{key}'").fetchone()
+            cursor.execute(f'UPDATE users SET trader_sub_id = "{trader_id[0]}" WHERE user_id = {message.from_user.id}')
+            await bot.send_message(chat_id=message.from_user.id,
+                           text = "Вы успешно подписались на трейдера!"
+                           )
+            flag = True
+            
+    if flag == False:
+        await bot.send_message(chat_id=message.from_user.id,
+                           text = "Ключ введен неправильно, повторите попытку"
+                           )
+        
+            
+    await state.finish()
+    conn.commit()
+    cursor.close()
 
 # Хендлер получения Api
 @dp.message_handler(state=Auth.api)
