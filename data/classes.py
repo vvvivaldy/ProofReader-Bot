@@ -31,6 +31,8 @@ class SetUserSubscriptionStatus(StatesGroup):
 class EditApi(StatesGroup):
     api = State()
     
+class Leverage(StatesGroup):
+    leverage_1 = State()
 
 class EditApiTrader(StatesGroup):
     api = State()

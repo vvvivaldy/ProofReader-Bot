@@ -26,6 +26,51 @@ async def auth_func(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                            text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
+# Хендлер управления плечом
+
+@dp.message_handler(Text(equals="Кредитное плечо"))
+async def leverage(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id,
+                           text = "Выберите действие:",
+                           reply_markup=kb_leverage)
+
+@dp.message_handler(Text(equals="Информация о плече монеты"))
+async def coin_info(message: types.Message, state: FSMContext) -> None:
+    await bot.send_message(chat_id=message.from_user.id, text="Введите Аббревиатуру Leveraged Token (пример -> BTC3L или BTC3S)")
+    await state.set_state(Leverage.leverage_1)
+
+@dp.message_handler(state=Leverage.leverage_1)
+async def coin_leverage(message: types.Message, state: FSMContext):
+    coin = message.text
+    session = HTTP(testnet=True)
+    try: 
+        info = session.get_leveraged_token_info(
+        ltCoin=coin)
+        fundFee = str(info["result"]["list"][0]["fundFee"]) + " -> Ежедневная плата за пользование плечом"
+        ltStatus = str(info["result"]["list"][0]["ltStatus"]) + " -> Статус (подробнее https://bybit-exchange.github.io/docs/v5/enum#ltstatus)"
+        maxPurchase = str(info["result"]["list"][0]["maxPurchase"]) + " -> Максимальная сумма для единоразовой покупки"
+        minPurchase = str(info["result"]["list"][0]["minPurchase"]) + " -> Минимальная сумма для единоразовой покупки"
+        maxRedeem = str(info["result"]["list"][0]["maxRedeem"]) + " -> Максиммальное количество для единоразового выкупа"
+        minRedeem = str(info["result"]["list"][0]["minRedeem"]) + " -> Минимальное количество для единоразового выкупа"
+        maxRedeemDaily = str(info["result"]["list"][0]["maxRedeemDaily"]) + " -> Максимальное количество для выкупа за один день"
+        purchaseFeeRate = str(info["result"]["list"][0]["purchaseFeeRate"]) + " -> Ставка платы за покупку"
+        redeemFeeRate = str(info["result"]["list"][0]["redeemFeeRate"]) + " -> ???"
+        manageFeeRate = str(info["result"]["list"][0]["manageFeeRate"]) + " -> Ставка платы за Менджмент"
+        value = str(info["result"]["list"][0]["value"]) + " -> Номинальная стоимость активов"
+
+        await bot.send_message(chat_id=message.from_user.id, text = f'''{fundFee}\n\n{ltStatus}\n\n{maxPurchase}
+        \n{minPurchase}
+        \n{maxRedeem}
+        \n{minRedeem}
+        \n{maxRedeemDaily}
+        \n{purchaseFeeRate}
+        \n{manageFeeRate}
+        \n{value}''')
+    except:
+        await bot.send_message(chat_id=message.from_user.id, text = "Формат монеты неверен, попробуйте еще раз", reply_markup=kb_leverage)
+
+    await state.finish()
+
 # Хендлер механизма подписки
 @dp.message_handler(Text(equals="Ввести ключ трейдера"))
 async def trader_keyy(message: types.Message, state: FSMContext) -> None:
@@ -106,6 +151,8 @@ async def profile_func(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
 
 
 

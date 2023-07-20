@@ -25,13 +25,22 @@ b_p2 = KeyboardButton("Настройки бота")
 b_p4 = KeyboardButton("Начать торговлю")
 b_edit_api = KeyboardButton('Редактировать API')
 b_trader_key = KeyboardButton('Ввести ключ трейдера')
-kb_reg.add(b_p1,b_p2,b_p4).add(b2,b_trader_key,b5).add(b_edit_api)
+b_leverage = KeyboardButton('Кредитное плечо')
+kb_reg.add(b_p1,b_p2,b_p4).add(b2,b_trader_key,b5).add(b_edit_api, b_leverage)
+
 
 # Клавиатура профиля
 kb_profile = ReplyKeyboardMarkup(resize_keyboard=True)
 prof_b1 = KeyboardButton("Баланс")
 prof_b2 = KeyboardButton("Назад")
 kb_profile.add(prof_b1).add(prof_b2)
+
+# Клавиатура плеча
+
+kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
+lb1 = KeyboardButton('Информация о плече монеты')
+kb_leverage.add(lb1).add(prof_b2)
+
 
 # Клавиатура инструкции
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)
