@@ -32,9 +32,10 @@ kb_reg.add(b_p1,b_p2,b_p4).add(b2,b_trader_key,b5).add(b_edit_api, b_leverage, b
 
 # Клавиатура профиля
 kb_profile = ReplyKeyboardMarkup(resize_keyboard=True)
+prof_b0 = KeyboardButton("Подписка")
 prof_b1 = KeyboardButton("Баланс")
 prof_b2 = KeyboardButton("Назад")
-kb_profile.add(prof_b1).add(prof_b2)
+kb_profile.add(prof_b0, prof_b1).add(prof_b2)
 
 # Клавиатура подписки на трейдера
 kb_subscribe_on_trader = ReplyKeyboardMarkup(resize_keyboard=True)
