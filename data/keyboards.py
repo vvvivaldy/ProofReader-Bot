@@ -26,7 +26,8 @@ b_p4 = KeyboardButton("Начать торговлю")
 b_edit_api = KeyboardButton('Редактировать API')
 b_trader_key = KeyboardButton('Ввести ключ трейдера')
 b_leverage = KeyboardButton('Кредитное плечо')
-kb_reg.add(b_p1,b_p2,b_p4).add(b2,b_trader_key,b5).add(b_edit_api, b_leverage)
+b_all_trader_sub = KeyboardButton('Мои подписки')
+kb_reg.add(b_p1,b_p2,b_p4).add(b2,b_trader_key,b5).add(b_edit_api, b_leverage, b_all_trader_sub)
 
 
 # Клавиатура профиля
