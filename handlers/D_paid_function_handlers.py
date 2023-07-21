@@ -44,14 +44,14 @@ async def leverage(message: types.Message):
 async def coin_info(message: types.Message, state: FSMContext) -> None:
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Введите Аббревиатуру Leveraged Token (пример -> BTC3L или BTC3S)")
-        await state.set_state(Leverage.leverage_1)
+        await Leverage.leverage_1.set()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Введите Аббревиатуру Leveraged Token (пример -> BTC3L или BTC3S)")
-        await state.set_state(Leverage.leverage_1)
+        await Leverage.leverage_1.set()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
@@ -93,22 +93,43 @@ async def coin_leverage(message: types.Message, state: FSMContext):
 # Хендлер механизма подписки
 @dp.message_handler(Text(equals="Подписка на трейдера"))
 async def trader_keyy(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id,
-                           text = "Выберите действие",
-                        reply_markup=kb_subscribe_on_trader)
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                            text = "Выберите действие",
+                            reply_markup=kb_subscribe_on_trader)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+    
+
 @dp.message_handler(Text(equals="Подписаться на трейдера"))
-async def trader_key_subscribe(message: types.Message, state: FSMContext):
-    await bot.send_message(chat_id=message.from_user.id, text="Введите ключ трейдера")
-    await state.set_state(TraderKey.trader_key_subscribe)
+async def trader_key_subscribe(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id, text="Введите ключ трейдера")
+        await TraderKey.trader_key_subscribe.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
 
 @dp.message_handler(Text(equals="Отписаться от трейдера"))
-async def trader_key_unsubscribe(message: types.Message, state: FSMContext):
-    await bot.send_message(chat_id=message.from_user.id, text="Вы уверены, что хотите отписаться?", reply_markup=kb_confirmation)
-    await state.set_state(TraderKey.trader_key_unsubscribe)
+async def trader_key_unsubscribe(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id, text="Вы уверены, что хотите отписаться?", reply_markup=kb_confirmation)
+        await TraderKey.trader_key_unsubscribe.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
 
 @dp.message_handler(Text(equals="Назад в меню подписки"))
 async def back_menu_sub_trader(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню подписки", reply_markup=kb_subscribe_on_trader)
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню подписки", reply_markup=kb_subscribe_on_trader)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
 
 @dp.message_handler(state=TraderKey.trader_key_unsubscribe)
 async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSMContext):
@@ -140,20 +161,20 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
     cursor.close()
     await state.finish()
 
-@dp.message_handler(state=TraderKey.trader_key_subscribe)
+
 @dp.message_handler(Text(equals="Ввести ключ трейдера"))
 async def trader_keyy(message: types.Message, state: FSMContext) -> None:
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,
                             text = "Введите <b>ключ трейдера</b>",
                             parse_mode="HTML")
-        await state.set_state(TraderKey.trader_key)
+        await TraderKey.trader_key_subscribe.set()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
     
-@dp.message_handler(state=TraderKey.trader_key)
+@dp.message_handler(state=TraderKey.trader_key_subscribe)
 async def key_checker(message: types.Message, state: FSMContext):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
