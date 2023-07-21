@@ -182,20 +182,9 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
     cursor.close()
     await state.finish()
 
-@dp.message_handler(state=TraderKey.trader_key_subscribe)
-@dp.message_handler(Text(equals="Ввести ключ трейдера"))
-async def trader_keyy(message: types.Message, state: FSMContext) -> None:
-    if paid_validate(message.from_user.id):
-        await bot.send_message(chat_id=message.from_user.id,
-                            text = "Введите <b>ключ трейдера</b>",
-                            parse_mode="HTML")
-        await state.set_state(TraderKey.trader_key)
-    else:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
     
-@dp.message_handler(state=TraderKey.trader_key)
+@dp.message_handler(state=TraderKey.trader_key_subscribe)
 async def key_checker(message: types.Message, state: FSMContext):
     conn, cursor = db_connect()
     if message.text != "Назад":
