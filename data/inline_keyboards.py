@@ -71,6 +71,12 @@ itsb2 = InlineKeyboardButton(text='Открытые сделки', callback_data
 itsb3 = InlineKeyboardButton(text='История сделок',callback_data='EHistoryOrders')
 ikb_trader_stat.add(itsb1,itsb2,itsb3)
 
+# Клавиатура вида контракта
+kb_contract = InlineKeyboardMarkup(resize_keyboard=True)
+conb1 = InlineKeyboardButton("Линейный", callback_data='Dlinear')
+conb2 = InlineKeyboardButton("Обратный", callback_data='Dinverse')
+kb_contract.add(conb1).add(conb2)
+
 
 kb_order = InlineKeyboardMarkup(row_width=2)
 k1 = InlineKeyboardButton(text='Отправить', callback_data='EpushOrder')

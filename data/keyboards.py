@@ -52,9 +52,17 @@ kb_confirmation.add(сb1, сb2).add(cb3)
 
 # Клавиатура плеча
 kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
-lb1 = KeyboardButton('Информация о плече монеты')
+lb1 = KeyboardButton("Максимальное плечо монеты")
 kb_leverage.add(lb1).add(prof_b2)
 
+
+
+# Клавиатура вида контракта
+kb_contract = ReplyKeyboardMarkup(resize_keyboard=True)
+conb1 = KeyboardButton("Линейный")
+conb2 = KeyboardButton("Обратный")
+conb2 = KeyboardButton("Назад в меню плеча")
+kb_contract.add(conb1).add(conb2)
 
 # Клавиатура инструкции
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)

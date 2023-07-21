@@ -33,7 +33,8 @@ class EditApi(StatesGroup):
     api = State()
     
 class Leverage(StatesGroup):
-    leverage_1 = State()
+    leverage_linear = State()
+    leverage_inverse = State()
 
 class EditApiTrader(StatesGroup):
     api = State()
