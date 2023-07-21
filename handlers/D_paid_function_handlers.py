@@ -72,14 +72,56 @@ async def coin_leverage(message: types.Message, state: FSMContext):
     await state.finish()
 
 # Хендлер механизма подписки
-@dp.message_handler(Text(equals="Ввести ключ трейдера"))
-async def trader_keyy(message: types.Message, state: FSMContext) -> None:
+@dp.message_handler(Text(equals="Подписка на трейдера"))
+async def trader_keyy(message: types.Message):
     await bot.send_message(chat_id=message.from_user.id,
-                           text = "Введите <b>ключ трейдера</b>",
-                           parse_mode="HTML")
-    await state.set_state(TraderKey.trader_key)
-    
-@dp.message_handler(state=TraderKey.trader_key)
+                           text = "Выберите действие",
+                        reply_markup=kb_subscribe_on_trader)
+@dp.message_handler(Text(equals="Подписаться на трейдера"))
+async def trader_key_subscribe(message: types.Message, state: FSMContext):
+    await bot.send_message(chat_id=message.from_user.id, text="Введите ключ трейдера")
+    await state.set_state(TraderKey.trader_key_subscribe)
+
+@dp.message_handler(Text(equals="Отписаться от трейдера"))
+async def trader_key_unsubscribe(message: types.Message, state: FSMContext):
+    await bot.send_message(chat_id=message.from_user.id, text="Вы уверены, что хотите отписаться?", reply_markup=kb_confirmation)
+    await state.set_state(TraderKey.trader_key_unsubscribe)
+
+@dp.message_handler(Text(equals="Назад в меню подписки"))
+async def back_menu_sub_trader(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню подписки", reply_markup=kb_subscribe_on_trader)
+
+@dp.message_handler(state=TraderKey.trader_key_unsubscribe)
+async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSMContext):
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    confirmation = message.text
+    if confirmation == "ДА":
+        trader_id1 = cursor.execute(f"SELECT trader_sub_id FROM users WHERE user_id = {message.from_user.id}").fetchone()
+        if trader_id1 == "o":
+            await bot.send_message(chat_id=message.from_user.id, text="Вы не подписаны ни на одного трейдера", reply_markup=kb_subscribe_on_trader)
+        else:
+            cursor.execute(f'UPDATE users SET trader_sub_id = "none" WHERE user_id = {message.from_user.id}')
+            try:
+                subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1[0]}'").fetchone()[0]
+                subs = subs.split(" ")
+                for i in subs:
+                    if i == str(message.from_user.id):
+                        subs.remove(i)
+                new_subs = ' '.join(subs)     
+                cursor.execute(f"""UPDATE traders SET trader_subs = '{new_subs}' WHERE trader_id = '{trader_id1[0]}'""")
+                await bot.send_message(chat_id=message.from_user.id, text="Вы успешно отписались от трейдера!", reply_markup=kb_subscribe_on_trader)
+            except:
+                await bot.send_message(chat_id=message.from_user.id, text="Вы не были подписаны на трейдера", reply_markup=kb_subscribe_on_trader)
+            
+    else:
+        await bot.send_message(chat_id=message.from_user.id, text="Изменения отменены", reply_markup=kb_subscribe_on_trader)
+
+    conn.commit()
+    cursor.close()
+    await state.finish()
+
+@dp.message_handler(state=TraderKey.trader_key_subscribe)
 async def key_checker(message: types.Message, state: FSMContext):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
