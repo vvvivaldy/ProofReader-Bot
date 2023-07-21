@@ -62,8 +62,8 @@ kb_leverage.add(lb1).add(prof_b2)
 kb_contract = ReplyKeyboardMarkup(resize_keyboard=True)
 conb1 = KeyboardButton("Линейный")
 conb2 = KeyboardButton("Обратный")
-conb2 = KeyboardButton("Назад в меню плеча")
-kb_contract.add(conb1).add(conb2)
+conb3 = KeyboardButton("Назад в меню плеча")
+kb_contract.add(conb1).add(conb2).add(conb3)
 
 # Клавиатура инструкции
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)

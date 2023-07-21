@@ -73,7 +73,7 @@ async def contract_type(message: types.Message, state: FSMContext):
     if paid_validate(message.from_user.id):
         try:
             info = session.get_risk_limit(
-            category="inverse",
+            category="linear",
             symbol=token,
             )
             symbol_info = info["result"]["list"][0]["symbol"]
@@ -102,7 +102,7 @@ async def contract_type(message: types.Message, state: FSMContext):
             await bot.send_message(chat_id=message.from_user.id, text = f'''Токен -> <b>{symbol_info}</b>\nМаксимальное плечо -> <b>{max_leverage}</b>''', parse_mode="HTML", reply_markup=kb_leverage)
         except:
             await bot.send_message(chat_id=message.from_user.id, text = "Формат монеты неверен, попробуйте еще раз", reply_markup=kb_leverage)
-        else:
+    else:
             await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
     await state.finish()
