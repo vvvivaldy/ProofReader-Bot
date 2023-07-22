@@ -153,8 +153,6 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     except:
                         mode = False
                     res = await set_user_status(conn,data,'paid', mode=mode)
-                    print(res)
-                    print(mode)
                     if res:
                         await callback.message.edit_text(text=f'Статус юзера {data}: paid',
                                                         reply_markup=ikst)
@@ -387,11 +385,11 @@ async def set_user_status(conn,id,status, mode = False):
         if not mode:
             cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
         else:
-            print(1)
+            api = cursor.execute(f'SELECT api_key, api_secret FROM traders WHERE trader_id = {id}').fetchone()
+            if api[0] == None:
+                api = '',''
             cursor.execute(f'DELETE FROM traders WHERE trader_id = {id}')
-            print(2)
-            cursor.execute(f"INSERT INTO users VALUES (?,?,?,?,'','','','','',?)", (id, "0", "0", status, 1))
-            print(3)
+            cursor.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?,'','','',?)", (id, "0", "0", status, api[0], api[1], 1))
     except Exception as e:
         print(e)
         return False
@@ -411,7 +409,7 @@ async def set_trader_status(conn, id, status):
 status, name) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?)""", (data[0], data[1], None, None, None, None))
         else:
             cursor.execute(f"INSERT INTO traders (trader_id, api_key, api_secret, subscribers, history, trader_keys,"
-                           f"status, name) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?)", (None, None, None, None, None, None))
+                           f"status, name) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?)", ('', '', None, None, None, None))
     except Exception as e:
         print(e)
         return False
