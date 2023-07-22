@@ -445,3 +445,18 @@ async def control_leverage(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Сбросить плечо'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE users SET leverage = 1 WHERE user_id = {message.from_user.id}')
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Плечо сброшено. \nТеперь ваше плечо является X1 (по дефолту)',
+                               reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
