@@ -59,7 +59,7 @@ async def descr_func(message: types.Message):
 
 
 # хендлер инфо
-@dp.message_handler(Text(equals='Info'))
+@dp.message_handler(Text(equals='Информация'))
 async def info(message: types.Message):
     _, cursor = db_connect()
     if paid_validate(message.from_user.id):

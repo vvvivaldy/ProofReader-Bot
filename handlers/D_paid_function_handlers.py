@@ -173,15 +173,15 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
             else:
                 try:
                     cursor.execute(f'UPDATE users SET trader_sub_id = "" WHERE user_id = {message.from_user.id}')
-                    subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1[0]}'").fetchone()[0]
+                    subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1}'").fetchone()[0]
                     subs = subs.split(" ")
                     for i in subs:
                         if i == str(message.from_user.id):
                             subs.remove(i)
-                    new_subs = ' '.join(subs)     
-                    cursor.execute(f"""UPDATE traders SET trader_subs = '{new_subs}' WHERE trader_id = '{trader_id1[0]}'""")
+                    new_subs = ' '.join(subs)
+                    cursor.execute(f"""UPDATE traders SET trader_subs = '{new_subs}' WHERE trader_id = '{trader_id1}'""")
                     await bot.send_message(chat_id=message.from_user.id, text="Вы успешно отписались от трейдера!", reply_markup=kb_subscribe_on_trader)
-                except:
+                except Exception as e:
                     await bot.send_message(chat_id=message.from_user.id, text="Вы не были подписаны на трейдера", reply_markup=kb_subscribe_on_trader)
                     await state.finish()   
                     return 
@@ -189,9 +189,9 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
         else:
             await bot.send_message(chat_id=message.from_user.id, text="Изменения отменены", reply_markup=kb_subscribe_on_trader)
 
-    conn.commit()
-    cursor.close()
-    await state.finish()
+        conn.commit()
+        cursor.close()
+        await state.finish()
 
         
 @dp.message_handler(state=TraderKey.trader_key_subscribe)
@@ -203,27 +203,29 @@ async def key_checker(message: types.Message, state: FSMContext):
         flag = False
         for i in traders_keys:
             if i[0] == key:
-                trader_id1 = cursor.execute(f"SELECT trader_id FROM trader_keys WHERE key = '{key}'").fetchone()
-                cursor.execute(f'UPDATE users SET trader_sub_id = "{trader_id1[0]}" WHERE user_id = {message.from_user.id}')
-                subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1[0]}'").fetchone()
-                cursor.execute(f"""UPDATE traders SET trader_subs = '{subs[0]}' || ' ' || '{message.from_user.id}' WHERE trader_id = '{trader_id1[0]}'""")
-                cursor.execute(f"""UPDATE trader_keys SET quantity = quantity + 1 WHERE key = '{key}'""")
+                trader_id1 = cursor.execute(f"SELECT trader_id FROM trader_keys WHERE key = '{key}'").fetchone()[0]
+                cursor.execute(f'UPDATE users SET trader_sub_id = "{trader_id1}" WHERE user_id = {message.from_user.id}')
+                subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1}'").fetchone()
+                cursor.execute(f"""UPDATE traders SET trader_subs = '{subs[0]}' || ' ' || '{message.from_user.id}' WHERE trader_id = '{trader_id1}'""")
+                cursor.execute(f"""UPDATE trader_keys SET quantity_tek = quantity_tek + 1 WHERE key = '{key}'""")
                 await bot.send_message(chat_id=message.from_user.id,
-                               text = "Вы успешно подписались на трейдера!")
+                               text = "Вы успешно подписались на трейдера!", reply_markup=kb_reg)
                 flag = True
 
         if flag == False:
             await bot.send_message(chat_id=message.from_user.id,
                                text="Ключ введен неправильно, повторите попытку"
                                )
+            conn.commit()
+            cursor.close()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Вы вернулись в меню",
                                reply_markup=kb_reg)
         
-        await state.finish()
-        conn.commit()
-        cursor.close()
+    await state.finish()
+    conn.commit()
+    cursor.close()
 
 
 # Хендлер получения Api
