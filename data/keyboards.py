@@ -64,7 +64,7 @@ kb_confirmation.add(сb1, сb2).add(cb3)
 kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
 lb1 = KeyboardButton("Максимальное плечо монеты")
 lb2 = KeyboardButton('Установить плечо')
-kb_leverage.add(lb1).add(prof_b4)
+kb_leverage.add(lb1,lb2).add(prof_b4)
 
 
 # Клава установки плеча

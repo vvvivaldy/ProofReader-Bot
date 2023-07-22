@@ -389,7 +389,7 @@ async def edit_leverage(message: types.Message):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,
                                text=f'(Мы не рекомендуем ставить слишком большое плечо на время бета-тестирования. Оптимально будет до Х15)\n\nВведите размер плеча в виде одного числа:')
-        Set_Leverage.leverage.set()
+        await Set_Leverage.leverage.set()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
@@ -404,7 +404,7 @@ async def set_leverage(message: types.Message, state = FSMContext):
     if message.text.isdigit() and (0 < int(message.text) <= 100):
         cursor.execute(f'UPDATE users SET leverage = {int(message.text)} WHERE user_id = {message.from_user.id}')
         await bot.send_message(chat_id=message.from_user.id,
-                               text = f'Теперь Ваше плечо: X{leverage} . По дефолту X1',
+                               text = f'Теперь Ваше плечо: X{leverage["leverage"]} . По дефолту X1',
                                reply_markup=kb_leverage)
     else:
         await bot.send_message(chat_id=message.from_user.id,
@@ -413,3 +413,27 @@ async def set_leverage(message: types.Message, state = FSMContext):
     conn.commit()
     cursor.close()
     await state.finish()
+
+
+@dp.message_handler(Text(equals='Настройки бота'))
+async def settings(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_photo(chat_id=message.from_user.id,
+                               photo='https://wallpapers.com/images/hd/cool-neon-blue-lf1zlxnvobv5cn1r.jpg',
+                               caption='Настройки бота',
+                               reply_markup=kb_settings)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Управление плечом'))
+async def control_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_photo(chat_id=message.from_user.id,
+                               photo='https://i.pinimg.com/originals/c2/9a/12/c29a120f645acc23afb709366c06b0bb.jpg',
+                               caption='Настройте с помощью клавиатуры',
+                               reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
