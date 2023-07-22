@@ -27,7 +27,6 @@ async def auth_func(message: types.Message):
                            text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
-
 # Хендлер управления плечом
 @dp.message_handler(Text(equals="Кредитное плечо"))
 async def leverage(message: types.Message):
@@ -48,11 +47,15 @@ async def coin_info(message: types.Message, state: FSMContext) -> None:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
             
+
 @dp.message_handler(Text(equals="Линейный"))
 async def contract_type(message: types.Message, state: FSMContext):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Введите аббревиатуру токена (пример -> BTCUSD)")
         await state.set_state(Leverage.leverage_linear)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 @dp.message_handler(Text(equals="Обратный"))
@@ -60,16 +63,24 @@ async def contract_type(message: types.Message, state: FSMContext):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Введите аббревиатуру токена (пример -> BTCUSD)")
         await state.set_state(Leverage.leverage_inverse)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
 
 @dp.message_handler(Text(equals="Назад в меню плеча"))
-async def back(message: types.message):
+async def back(message: types.Message):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню плеча", reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
 
 @dp.message_handler(state=Leverage.leverage_linear)
 async def contract_type(message: types.Message, state: FSMContext):
     token = message.text
-    session = HTTP(testnet=True)
+    session = HTTP(testnet=False)
     if paid_validate(message.from_user.id):
         try:
             info = session.get_risk_limit(
@@ -90,7 +101,7 @@ async def contract_type(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Leverage.leverage_inverse)
 async def contract_type(message: types.Message, state: FSMContext):
     token = message.text
-    session = HTTP(testnet=True)
+    session = HTTP(testnet=False)
     if paid_validate(message.from_user.id):
         try:
             info = session.get_risk_limit(
@@ -106,8 +117,6 @@ async def contract_type(message: types.Message, state: FSMContext):
             await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
     await state.finish()
-
-
 
 
 # Хендлер механизма подписки
@@ -158,12 +167,12 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
         cursor = conn.cursor()
         confirmation = message.text
         if confirmation == "ДА":
-            trader_id1 = cursor.execute(f"SELECT trader_sub_id FROM users WHERE user_id = {message.from_user.id}").fetchone()
-            if trader_id1 == "o":
+            trader_id1 = cursor.execute(f"SELECT trader_sub_id FROM users WHERE user_id = {message.from_user.id}").fetchone()[0]
+            if trader_id1 == "":
                 await bot.send_message(chat_id=message.from_user.id, text="Вы не подписаны ни на одного трейдера", reply_markup=kb_subscribe_on_trader)
             else:
-                cursor.execute(f'UPDATE users SET trader_sub_id = "none" WHERE user_id = {message.from_user.id}')
                 try:
+                    cursor.execute(f'UPDATE users SET trader_sub_id = "" WHERE user_id = {message.from_user.id}')
                     subs = cursor.execute(f"SELECT trader_subs FROM traders WHERE trader_id = '{trader_id1[0]}'").fetchone()[0]
                     subs = subs.split(" ")
                     for i in subs:
@@ -174,6 +183,8 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
                     await bot.send_message(chat_id=message.from_user.id, text="Вы успешно отписались от трейдера!", reply_markup=kb_subscribe_on_trader)
                 except:
                     await bot.send_message(chat_id=message.from_user.id, text="Вы не были подписаны на трейдера", reply_markup=kb_subscribe_on_trader)
+                    await state.finish()   
+                    return 
             
         else:
             await bot.send_message(chat_id=message.from_user.id, text="Изменения отменены", reply_markup=kb_subscribe_on_trader)
@@ -183,7 +194,6 @@ async def trader_key_unsubscribe_confirmation(message: types.Message, state: FSM
     await state.finish()
 
         
-    
 @dp.message_handler(state=TraderKey.trader_key_subscribe)
 async def key_checker(message: types.Message, state: FSMContext):
     conn, cursor = db_connect()
@@ -286,6 +296,9 @@ async def balance_func(message: types.Message):
                          text=text,
                          parse_mode="HTML",
                          reply_markup=kb_reg)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 # Хендлер Баланса
