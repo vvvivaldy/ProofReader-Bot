@@ -369,3 +369,44 @@ async def my_subs(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Установить плечо'))
+async def take_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        leverage = cursor.execute(f'SELECT leverage FROM users WHERE user_id = {message.from_user.id}').fetchone()[0]
+        await bot.send_message(chat_id=message.from_user.id,
+                               text = f'Ваше текущее плечо: X{leverage} . По дефолту X1',
+                               reply_markup=kb_set_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Изменить'))
+async def edit_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'(Мы не рекомендуем ставить слишком большое плечо на время бета-тестирования. Оптимально будет до Х15)\n\nВведите размер плеча в виде одного числа:')
+        Set_Leverage.leverage.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(state=Set_Leverage.leverage)
+async def set_leverage(message: types.Message, state = FSMContext):
+    conn, cursor = db_connect()
+    if message.text.isdigit() and (0 < int(message.text) <= 100):
+        cursor.execute(f'UPDATE users SET leverage = {int(message.text)} WHERE user_id = {message.from_user.id}')
+        await bot.send_message(chat_id=message.from_user.id,
+                               text = f'Теперь Ваше плечо: X{leverage} . По дефолту X1',
+                               reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Плечо слишком большое либо введено некорректно.',
+                               reply_markup=kb_set_leverage)
+    conn.commit()
+    cursor.close()
+    await state.finish()

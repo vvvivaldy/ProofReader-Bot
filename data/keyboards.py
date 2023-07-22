@@ -63,8 +63,16 @@ kb_confirmation.add(сb1, сb2).add(cb3)
 # Клавиатура плеча
 kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
 lb1 = KeyboardButton("Максимальное плечо монеты")
-kb_leverage.add(lb1).add(prof_b2)
+lb2 = KeyboardButton('Установить плечо')
+kb_leverage.add(lb1).add(prof_b4)
 
+
+# Клава установки плеча
+kb_set_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
+kb_set_leverage1 = KeyboardButton('Сбросить плечо')
+kb_set_leverage2 = KeyboardButton('Изменить')
+kb_set_leverage3 = KeyboardButton('Установить плечо как у трейдера')
+kb_set_leverage.add(kb_set_leverage1, kb_set_leverage2).add(kb_set_leverage3).add(prof_b4)
 
 
 # Клавиатура вида контракта

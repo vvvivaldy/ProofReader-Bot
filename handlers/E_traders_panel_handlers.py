@@ -220,7 +220,7 @@ async def new_key(message: types.Message):
 
 
 @dp.message_handler(Text(equals='Удалить ключ'))
-async def new_key(message: types.Message):
+async def del_key(message: types.Message):
     if trader_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Введите ключ, который необходимо удалить")
@@ -273,7 +273,7 @@ async def trader_help(message: types.Message):
 
 
 @dp.message_handler(Text(equals='Вкл отслеживание'))
-async def trader_help(message: types.Message):
+async def trader_on(message: types.Message):
     if trader_validate(message.from_user.id):
         await go_stream(message.from_user.id)
     else:
@@ -282,7 +282,7 @@ async def trader_help(message: types.Message):
 
 
 @dp.message_handler(Text(equals='Выкл отслеживание'))
-async def trader_help(message: types.Message):
+async def trader_off(message: types.Message):
     if trader_validate(message.from_user.id):
         if stop_stream(message.from_user.id):
             await bot.send_message(chat_id=message.from_user.id,
@@ -295,4 +295,5 @@ async def trader_help(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
         
