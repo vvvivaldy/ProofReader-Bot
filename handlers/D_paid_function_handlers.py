@@ -397,6 +397,9 @@ async def edit_leverage(message: types.Message):
 
 @dp.message_handler(state=Set_Leverage.leverage)
 async def set_leverage(message: types.Message, state = FSMContext):
+    async with state.proxy() as proxy:
+        proxy['leverage'] = message.text
+    leverage = await state.get_data()
     conn, cursor = db_connect()
     if message.text.isdigit() and (0 < int(message.text) <= 100):
         cursor.execute(f'UPDATE users SET leverage = {int(message.text)} WHERE user_id = {message.from_user.id}')

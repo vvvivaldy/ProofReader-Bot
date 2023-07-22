@@ -121,12 +121,18 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                 try:
                     data = data.readlines()[0]
                     conn = sqlite3.connect('db/database.db')
-                    res = await set_user_status(conn,data,'free')
+                    cursor = conn.cursor()
+                    try:
+                        if len(cursor.execute(f'SELECT status FROM traders WHERE trader_id = {data}').fetchone()) == 1: mode = True
+                        else: mode = False
+                    except:
+                        mode = False
+                    res = await set_user_status(conn,data,'free', mode=mode)
                     if res:
                         await callback.message.edit_text(text=f'Статус юзера {data}: free',
                                                         reply_markup=ikst)
-                        cursor = conn.cursor()
-                        cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = "{data}"')
+                        if not mode:
+                            cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = "{data}"')
                         conn.commit()
                         cursor.close()
                     else:
@@ -138,9 +144,17 @@ async def admin_callbacks(callback: types.CallbackQuery,):
         case 'set_paid':
             with open('cache/cache.txt','r',encoding='utf-8')as data:
                 try:
-                    data = data.readlines()[0]
                     conn = sqlite3.connect('db/database.db')
-                    res = await set_user_status(conn,data,'paid')
+                    cursor = conn.cursor()
+                    data = data.readlines()[0]
+                    try:
+                        if len(cursor.execute(f'SELECT status FROM traders WHERE trader_id = {data}').fetchone()) == 1: mode = True
+                        else: mode = False
+                    except:
+                        mode = False
+                    res = await set_user_status(conn,data,'paid', mode=mode)
+                    print(res)
+                    print(mode)
                     if res:
                         await callback.message.edit_text(text=f'Статус юзера {data}: paid',
                                                         reply_markup=ikst)
@@ -367,13 +381,21 @@ async def set_api(message: types.Message, state: FSMContext):
         await state.finish()
         
 
-async def set_user_status(conn,id,status):
+async def set_user_status(conn,id,status, mode = False):
     cursor = conn.cursor()
     try:
-        cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
-    except:
+        if not mode:
+            cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
+        else:
+            print(1)
+            cursor.execute(f'DELETE FROM traders WHERE trader_id = {id}')
+            print(2)
+            cursor.execute(f"INSERT INTO users VALUES (?,?,?,?,'','','','','',?)", (id, "0", "0", status, 1))
+            print(3)
+    except Exception as e:
+        print(e)
         return False
-    if status == 'paid':
+    if status == 'paid' or mode:
         conn.commit()
         conn.close()
     return True
