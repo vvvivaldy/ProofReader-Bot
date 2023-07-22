@@ -43,8 +43,7 @@ kb_prof.add(prof_b1, prof_b2).add(prof_b3, b_all_trader_sub).add(prof_b4)
 kb_settings = ReplyKeyboardMarkup(resize_keyboard=True)
 set_b1 = KeyboardButton("Сумма сделки")
 set_b2 = KeyboardButton("Управление плечом")
-set_b3 = KeyboardButton("Выбор трейдеров")
-kb_settings.add(set_b1).add(set_b2).add(set_b3).add(prof_b4)
+kb_settings.add(set_b1).add(set_b2).add(prof_b4)
 
 # Клавиатура подписки на трейдера
 kb_subscribe_on_trader = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -63,9 +62,14 @@ kb_confirmation.add(сb1, сb2).add(cb3)
 # Клавиатура плеча
 kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
 lb1 = KeyboardButton("Максимальное плечо монеты")
-kb_leverage.add(lb1).add(prof_b2)
+kb_leverage.add(lb1).add(sb3)
 
-
+kb_inform = ReplyKeyboardMarkup(resize_keyboard=True)
+info_b1 = KeyboardButton("О нас")
+info_b2 = KeyboardButton("Инструкция")
+info_b3 = KeyboardButton("Наши трейдеры")
+info_b4 = KeyboardButton("Пользовательское соглашение")
+kb_inform.add(info_b1, info_b2).add(info_b3).add(info_b4).add(sb3)
 
 # Клавиатура вида контракта
 kb_contract = ReplyKeyboardMarkup(resize_keyboard=True)

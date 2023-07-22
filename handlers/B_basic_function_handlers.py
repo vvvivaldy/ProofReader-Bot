@@ -63,7 +63,7 @@ async def descr_func(message: types.Message):
 async def info(message: types.Message):
     _, cursor = db_connect()
     if paid_validate(message.from_user.id):
-        kb = kb_reg
+        await message.answer(text="Выберите действие", parse_mode='html', reply_markup=kb_inform)
 
     elif trader_validate(message.from_user.id):
         global stream_websockets
@@ -71,9 +71,10 @@ async def info(message: types.Message):
             kb = kb_trader2
         else:
             kb = kb_trader
+        await message.answer(text=INFO, parse_mode='html', reply_markup=kb)
     else:
         kb = kb_free
-    await message.answer(text=INFO, parse_mode='html',reply_markup=kb)
+        await message.answer(text=INFO, parse_mode='html',reply_markup=kb)
 
 
 # Хендлер Инструкции

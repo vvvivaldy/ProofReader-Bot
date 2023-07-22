@@ -28,7 +28,7 @@ async def auth_func(message: types.Message):
 
 
 # Хендлер управления плечом
-@dp.message_handler(Text(equals="Кредитное плечо"))
+@dp.message_handler(Text(equals="Управление плечом"))
 async def leverage(message: types.Message):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,    
@@ -209,7 +209,7 @@ async def key_checker(message: types.Message, state: FSMContext):
                 cursor.execute(f"""UPDATE traders SET trader_subs = '{subs[0]}' || ' ' || '{message.from_user.id}' WHERE trader_id = '{trader_id1}'""")
                 cursor.execute(f"""UPDATE trader_keys SET quantity_tek = quantity_tek + 1 WHERE key = '{key}'""")
                 await bot.send_message(chat_id=message.from_user.id,
-                               text = "Вы успешно подписались на трейдера!", reply_markup=kb_reg)
+                               text="Вы успешно подписались на трейдера!", reply_markup=kb_reg)
                 flag = True
 
         if flag == False:
@@ -268,6 +268,14 @@ async def set_api(message: types.Message, state: FSMContext):
 async def profile_func(message: types.Message):
     if paid_validate(message.from_user.id):
         await message.answer(text="Выберите действие", reply_markup=kb_prof)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+@dp.message_handler(Text(equals="Настройки бота"))
+async def profile_func(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await message.answer(text="Выберите действие", reply_markup=kb_settings)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
