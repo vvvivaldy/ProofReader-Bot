@@ -20,22 +20,31 @@ kb_unreg.add(b_unreg1).add(b3)
 
 # Платная Клавиатура (Зареганный аккаунт)
 kb_reg = ReplyKeyboardMarkup(resize_keyboard=True)
-b_p1 = KeyboardButton("Профиль")
-b_p2 = KeyboardButton("Настройки бота")
-b_p4 = KeyboardButton("Начать торговлю")
-b_edit_api = KeyboardButton('Редактировать API')
-b_trader_key = KeyboardButton('Подписка на трейдера')
-b_leverage = KeyboardButton('Кредитное плечо')
-b_all_trader_sub = KeyboardButton('Мои подписки')
-kb_reg.add(b_p1,b_p2,b_p4).add(b2,b_trader_key,b5).add(b_edit_api, b_leverage, b_all_trader_sub)
+b_profile = KeyboardButton("Профиль")
+b_settings = KeyboardButton("Настройки бота")
+b_subscr = KeyboardButton("Подписка на трейдера")
+b_info = KeyboardButton("Информация")
+b_start = KeyboardButton("Начать торговлю")
+# b_edit_api = KeyboardButton('Редактировать API')
+# b_leverage = KeyboardButton('Кредитное плечо')
+kb_reg.add(b_profile,b_settings).add(b_subscr,b_info).add(b_start)
 
 
 # Клавиатура профиля
-kb_profile = ReplyKeyboardMarkup(resize_keyboard=True)
-prof_b0 = KeyboardButton("Подписка")
+kb_prof = ReplyKeyboardMarkup(resize_keyboard=True)
 prof_b1 = KeyboardButton("Баланс")
-prof_b2 = KeyboardButton("Назад")
-kb_profile.add(prof_b0, prof_b1).add(prof_b2)
+prof_b2 = KeyboardButton("Статистика")
+prof_b3 = KeyboardButton("Подписка")
+b_all_trader_sub = KeyboardButton('Мои трейдеры')
+prof_b4 = KeyboardButton("Назад")
+kb_prof.add(prof_b1, prof_b2).add(prof_b3, b_all_trader_sub).add(prof_b4)
+
+# Клавиатура настройки бота
+kb_settings = ReplyKeyboardMarkup(resize_keyboard=True)
+set_b1 = KeyboardButton("Сумма сделки")
+set_b2 = KeyboardButton("Управление плечом")
+set_b3 = KeyboardButton("Выбор трейдеров")
+kb_settings.add(set_b1).add(set_b2).add(set_b3).add(prof_b4)
 
 # Клавиатура подписки на трейдера
 kb_subscribe_on_trader = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -73,7 +82,7 @@ kb_instruct.add(b_ins1).add(b_ins2).add(prof_b2)
 
 # Клавиатура админ панели
 kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)
-adb1 = KeyboardButton('Статистика')
+adb1 = KeyboardButton('Статистика бота')
 adb2 = KeyboardButton('Цены')
 adb3 = KeyboardButton('Черный список')
 adb4 = KeyboardButton('Вывод данных о клиенте')

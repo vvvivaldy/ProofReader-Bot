@@ -13,7 +13,7 @@ async def admin_check(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
-@dp.message_handler(Text(equals='Статистика'))
+@dp.message_handler(Text(equals='Статистика бота'))
 async def statistics_for_admin(message: types.Message):
     if await admin_validate(message):
         await bot.send_photo(chat_id=message.from_user.id,

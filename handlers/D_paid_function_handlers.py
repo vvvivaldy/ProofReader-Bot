@@ -32,7 +32,7 @@ async def auth_func(message: types.Message):
 async def leverage(message: types.Message):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,    
-                            text = "Выберите действие:",
+                            text="Выберите действие:",
                             reply_markup=kb_leverage)
     else:
         await bot.send_message(chat_id=message.from_user.id,
@@ -265,7 +265,7 @@ async def set_api(message: types.Message, state: FSMContext):
 @dp.message_handler(Text(equals="Профиль"))
 async def profile_func(message: types.Message):
     if paid_validate(message.from_user.id):
-        await message.answer(text="Выберите действие", reply_markup=kb_profile)
+        await message.answer(text="Выберите действие", reply_markup=kb_prof)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
@@ -290,12 +290,11 @@ async def balance_func(message: types.Message):
             case "year":
                 a = SROKS[4]
         text = f"""<u>У вас активирована подписка на {a}</u>
-<b>Начало подписки:</b> {data[0]}
-<b>Конец подписки:</b> {data[1]}"""
+<b>• Начало подписки:</b> {data[0]}
+<b>• Конец подписки:</b> {data[1]}"""
         await bot.send_message(chat_id=message.from_user.id,
                          text=text,
-                         parse_mode="HTML",
-                         reply_markup=kb_reg)
+                         parse_mode="HTML")
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
@@ -329,7 +328,7 @@ async def balance_func(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
 
-@dp.message_handler(Text(equals='Мои подписки'))
+@dp.message_handler(Text(equals='Мои трейдеры'))
 async def my_subs(message: types.Message):
     if paid_validate(message.from_user.id):
         conn, cursor = db_connect()
@@ -340,7 +339,7 @@ async def my_subs(message: types.Message):
                 info = cursor.execute(f'SELECT name FROM traders WHERE trader_id = {i} AND status = "trader"').fetchone()[0]
                 traders += f'{info} \n'
         else:
-            traders += 'Увы, вы ни на кого не подписаны'
+            traders += 'Вы ни на кого не подписаны'
         await bot.send_message(chat_id=message.from_user.id,
                                text=traders,
                                reply_markup=kb_reg)
