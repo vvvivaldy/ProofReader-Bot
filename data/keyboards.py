@@ -124,6 +124,15 @@ kb_trader2 = ReplyKeyboardMarkup(resize_keyboard=True)
 kb_trader2.add(trade1, trade2).add(trade3, b_edit_api).add(trade5)
 
 
+# Клавиатура статистики
+kb_stat = ReplyKeyboardMarkup(resize_keyboard=True)
+stat_b1 = KeyboardButton("Открытые сделки")
+stat_b2 = KeyboardButton("Мои активы")
+stat_b3 = KeyboardButton("Баланс")
+stat_b4 = KeyboardButton("Профит/убыток")
+kb_stat.add(stat_b1, stat_b2).add(stat_b3, stat_b4)
+
+
 # Клавиатура ключей
 kb_keys = ReplyKeyboardMarkup(resize_keyboard=True)
 key1 = KeyboardButton('Создать ключ')

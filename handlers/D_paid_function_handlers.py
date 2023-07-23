@@ -39,7 +39,7 @@ async def leverage(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
     
 
-@dp.message_handler(Text(equals="Максимальное плечо монеты"))
+'''@dp.message_handler(Text(equals="Максимальное плечо монеты"))
 async def coin_info(message: types.Message, state: FSMContext) -> None:
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Выберите вид контракта -> Линейный/Обратный", reply_markup=kb_contract)
@@ -74,7 +74,7 @@ async def back(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню плеча", reply_markup=kb_leverage)
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")'''
 
 
 @dp.message_handler(state=Leverage.leverage_linear)
@@ -97,6 +97,11 @@ async def contract_type(message: types.Message, state: FSMContext):
                             text="Мы не предусмотрели данный запрос. Повторите попытку.")
     await state.finish()
 
+
+# Хендлер статистики
+@dp.message_handler(Text(equals="Статистика"))
+async def statistics(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id, text="Выберите действие", reply_markup=kb_stat)
 
 @dp.message_handler(state=Leverage.leverage_inverse)
 async def contract_type(message: types.Message, state: FSMContext):
@@ -308,6 +313,37 @@ async def balance_func(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+# Хендлеры открытых сделок
+@dp.message_handler(Text(equals="Открытые сделки"))
+async def open_orders(message: types.Message):
+    conn, cursor = db_connect()
+    data = cursor.execute(f"""SELECT order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, status, open_price, close_price, close_order_id, profit, qty FROM orders WHERE user_id = '{message.from_user.id}'""").fetchall()
+    res = ''
+    for item in data:
+                res+=f"""
+Базовый ордер: {item[0]}
+TP ордер: {item[1]}
+SL ордер: {item[2]}
+Валютная пара: {item[3]}
+Уровень TakeProfit: {item[4]}
+Уровень StopLoss: {item[5]}
+Уровень открытия базового ордера: {item[6]}
+Кол-во монет: {item[7]}
+----------------------
+"""
+    if res != '':
+        await bot.send_message(chat_id=message.from_user.id,
+                                    text=res,
+                                    reply_markup=kb_trader)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                                    text='У вас нет открытых ордеров,которые были отслежены',
+                                    reply_markup=kb_trader)
+    return
+   
+
 
 
 # Хендлер Баланса
