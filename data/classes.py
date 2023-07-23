@@ -61,3 +61,11 @@ class Key_Delete(StatesGroup):
 
 class Set_Leverage(StatesGroup):
     leverage = State()
+
+
+class Set_Percent(StatesGroup):
+    percent = State()
+
+
+class Set_Dollars(StatesGroup):
+    dollars = State()

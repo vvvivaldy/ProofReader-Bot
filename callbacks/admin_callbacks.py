@@ -389,7 +389,7 @@ async def set_user_status(conn,id,status, mode = False):
             if api[0] == None:
                 api = '',''
             cursor.execute(f'DELETE FROM traders WHERE trader_id = {id}')
-            cursor.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?,'','','',?)", (id, "0", "0", status, api[0], api[1], 1))
+            cursor.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?,'','','',?, '')", (id, "0", "0", status, api[0], api[1], 1))
     except Exception as e:
         print(e)
         return False

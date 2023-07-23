@@ -12,7 +12,7 @@ from data.keyboards import kb_free, kb_instruct, kb_reg, kb_unreg, kb_prof, kb_a
      kb_set_leverage, kb_inform, kb_summ
 from data.inline_keyboards import ikas, paykb, inl_kb_pr, inl_kb_status, ikk, ikst, ikb_period, ik_edit_api, ikb_quantity, ikb_trader_stat, kb_order
 from data.classes import Auth, Bl_Id_Trader, Bl_Id_User, UserDel, TraderStatus, UserStatus, SetUserSubscriptionStatus, EditApi, \
-     EditApiTrader, Key_Duration, Activation_Quantity, Key_Delete, TraderKey, Leverage, Set_Leverage
+     EditApiTrader, Key_Duration, Activation_Quantity, Key_Delete, TraderKey, Leverage, Set_Leverage, Set_Percent, Set_Dollars
 
 
 import logging

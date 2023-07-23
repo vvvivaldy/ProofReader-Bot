@@ -246,8 +246,7 @@ async def set_api(message: types.Message, state: FSMContext):
         await state.finish()
         return
 
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
+    conn, cursor = db_connect()
     if not trader_validate(message.from_user.id):
         cursor.execute(f"""UPDATE users SET api_secret = "{api_secret}", api_key = "{api_key}"
                                 WHERE user_id = {message.from_user.id}""")
@@ -471,6 +470,110 @@ async def drop_leverage(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Процент от депозита'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Напишите процент от депозита одним числом.\n<b>Мы не советуем тратить на одну сделку более 50 %.</b>",
+                               parse_mode="HTML")
+        await Set_Percent.percent.set()
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(state=Set_Percent.percent)
+async def set_leverage(message: types.Message, state=FSMContext):
+    async with state.proxy() as proxy:
+        proxy['percent'] = message.text
+    percent = await state.get_data()
+    percent = percent["percent"]
+    if percent != "Назад в настройки":
+        try:
+            if 0 < int(percent) <= 100:
+                conn, cursor = db_connect()
+                cursor.execute(f"""UPDATE users SET sum = "{percent} %" WHERE user_id = {message.from_user.id}""")
+                conn.commit()
+                cursor.close()
+                await bot.send_message(message.chat.id, f'Изменения были успешно сохранены, теперь на каждую сделку будет тратиться <b>{percent} %</b> от депозита.',
+                                       parse_mode="HTML",
+                                       reply_markup=kb_settings)
+                await state.reset_state()
+                await state.finish()
+            else:
+                await bot.send_message(message.chat.id,
+                                       f'Вы указали недопустимое число. Повторите попытку.')
+
+        except ValueError:
+            await bot.send_message(message.chat.id,
+                                   f'Вы должны написать только число. Повторите попытку.')
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в настройки бота",
+                               reply_markup=kb_settings)
+        await state.reset_state()
+        await state.finish()
+
+
+@dp.message_handler(Text(equals='Фиксированная сумма'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Напишите сумму (в долларах), которая будет тратиться на сделку целым числом.\n<b>Мы не советуем тратить на одну сделку более 50 % от депозита.</b>",
+                               parse_mode="HTML")
+        await Set_Dollars.dollars.set()
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(state=Set_Dollars.dollars)
+async def set_leverage(message: types.Message, state=FSMContext):
+    async with state.proxy() as proxy:
+        proxy['dollars'] = message.text
+    dollars = await state.get_data()
+    dollars = dollars["dollars"]
+    if dollars != "Назад в настройки":
+        try:
+            conn, cursor = db_connect()
+            data = cursor.execute('SELECT api_secret, api_key FROM users WHERE user_id=?;',
+                                  (message.from_user.id,)).fetchone()
+            session = HTTP(
+                api_key=decrypt_api(data[1]),
+                api_secret=decrypt_api(data[0])
+            )
+
+            wallet_balance_data = session.get_wallet_balance(accountType="UNIFIED")["result"]["list"][0]
+            total_balance = wallet_balance_data["totalEquity"]
+            print(total_balance)
+            if 0 < int(dollars) <= float(total_balance):
+                conn, cursor = db_connect()
+                cursor.execute(f"""UPDATE users SET sum = "{dollars} $" WHERE user_id = {message.from_user.id}""")
+                conn.commit()
+                cursor.close()
+                await bot.send_message(message.chat.id, f'Изменения были успешно сохранены, теперь на каждую сделку будет тратиться <b>{dollars} $</b> от депозита.',
+                                       parse_mode="HTML",
+                                       reply_markup=kb_settings)
+                await state.reset_state()
+                await state.finish()
+            else:
+                await bot.send_message(message.chat.id,
+                                       f'Вы указали недопустимое число, или на вашем деривативном счету не достаточно средств. Повторите попытку.')
+
+        except ValueError:
+            await bot.send_message(message.chat.id,
+                                   f'Вы должны написать только число. Повторите попытку.')
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в настройки бота",
+                               reply_markup=kb_settings)
+        await state.reset_state()
+        await state.finish()
+
 
 
 @dp.message_handler(Text(equals='Назад в настройки'))
