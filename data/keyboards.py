@@ -82,7 +82,7 @@ kb_contract.add(conb1).add(conb2).add(conb3)
 kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)
 b_ins1 = KeyboardButton("Как создать API ключ?")
 b_ins2 = KeyboardButton("❌Предостережения❌")
-kb_instruct.add(b_ins1).add(b_ins2).add(prof_b2)
+kb_instruct.add(b_ins1).add(b_ins2).add(sb3)
 
 # Клавиатура админ панели
 kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)

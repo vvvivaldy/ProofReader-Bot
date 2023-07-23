@@ -84,14 +84,10 @@ async def descr_func(message: types.Message):
                            text=INSTRUCT,
                            parse_mode="HTML",
                            reply_markup=kb_instruct)
-    
 
-    
-    
-    
 
 # хендлер вывода трейдеров
-@dp.message_handler(Text(equals='Наши Трейдеры'))
+@dp.message_handler(Text(equals='Наши трейдеры'))
 async def toptraders(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
@@ -99,7 +95,7 @@ async def toptraders(message: types.Message):
     res = ''
     print(traders)
     for i in range(0,len(traders)):
-        res += f'-: {traders[i][0]}\n' 
+        res += f'• <b>{traders[i][0]}</b>\n'
         if traders[i][0] == None and i != 0:
             return
         elif i == 0 and traders[i][0] == None:
@@ -107,7 +103,8 @@ async def toptraders(message: types.Message):
                                    text = f'База данных трейдеров пуста')
             return
     await bot.send_message(chat_id=message.from_user.id,
-                                   text = f'Наши трейдеры: \n{res}')
+                           text=f'Наши трейдеры: \n{res}',
+                           parse_mode="HTML")
 
 
 
