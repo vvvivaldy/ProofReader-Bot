@@ -3,7 +3,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 # КНОПКИ И ДЛЯ ПЛАТНОГО ЮЗЕРА И ДЛЯ ТРЕЙДЕРА
 b_edit_api = KeyboardButton('Редактировать API')
-
+back_to_settings = KeyboardButton('Назад в настройки')
 # Бесплатная Клавиатура
 kb_free = ReplyKeyboardMarkup(resize_keyboard=True)
 b1 = KeyboardButton("Описание")
@@ -63,7 +63,7 @@ kb_confirmation.add(сb1, сb2).add(cb3)
 kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
 lb1 = KeyboardButton("Максимальное плечо монеты")
 lb2 = KeyboardButton('Установить плечо')
-kb_leverage.add(lb1,lb2).add(prof_b4)
+kb_leverage.add(lb1,lb2).add(back_to_settings)
 
 
 # Клава установки плеча
@@ -132,3 +132,8 @@ key3 = KeyboardButton('Вывод всех ключей')
 key4 = KeyboardButton('Вернуться')
 kb_keys.add(key1, key2).add(key3).add(key4)
 
+# Клавиатура суммы
+kb_summ = ReplyKeyboardMarkup(resize_keyboard=True)
+percent = KeyboardButton('Процент от депозита')
+fix = KeyboardButton('Фиксированная сумма')
+kb_summ.add(percent).add(fix).add(back_to_settings)

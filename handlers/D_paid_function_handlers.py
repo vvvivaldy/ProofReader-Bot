@@ -455,8 +455,30 @@ async def drop_leverage(message: types.Message):
         conn.commit()
         cursor.close()
         await bot.send_message(chat_id=message.from_user.id,
-                               text='Плечо сброшено. \nТеперь ваше плечо является X1 (по дефолту)',
+                               text='Плечо сброшено. \nТеперь ваше плечо является X1 (по дефолту).',
                                reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Сумма сделки'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Выберите вариант, благодаря котрому будет расчитываться сумма каждой сделки.",
+                               reply_markup=kb_summ)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Назад в настройки'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в настройки бота",
+                               reply_markup=kb_settings)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
