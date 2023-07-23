@@ -16,28 +16,36 @@ class Bl_Id_User(StatesGroup):
 class UserDel(StatesGroup):
     id = State()
 
+
 class UserStatus(StatesGroup):
     status = State()
 
+
 class TraderStatus(StatesGroup):
     status = State()
+
 
 class TraderKey(StatesGroup):
     trader_key_subscribe = State()
     trader_key_unsubscribe = State()
     
+
 class SetUserSubscriptionStatus(StatesGroup):
     sub_status = State()
+
 
 class EditApi(StatesGroup):
     api = State()
     
+
 class Leverage(StatesGroup):
     leverage_linear = State()
     leverage_inverse = State()
 
+
 class EditApiTrader(StatesGroup):
     api = State()
+
 
 class Key_Duration(StatesGroup):
     date = State()
@@ -49,3 +57,7 @@ class Activation_Quantity(StatesGroup):
 
 class Key_Delete(StatesGroup):
     key = State()
+
+
+class Set_Leverage(StatesGroup):
+    leverage = State()

@@ -226,6 +226,8 @@ async def SetUserSubStatus(message: types.Message, state: FSMContext):
     cur = conn.cursor()
     try:
         user_db = cur.execute(f'SELECT user_id, status FROM users WHERE user_id = {user}').fetchall()
+        if len(user_db) == 0:
+            user_db = cur.execute(f'SELECT trader_id, status FROM traders WHERE trader_id = {user}').fetchall()
     except:
         await bot.send_message(chat_id=message.from_user.id,
                         text='Неккоректные данные в введенном id',

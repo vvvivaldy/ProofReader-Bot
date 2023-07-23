@@ -377,3 +377,86 @@ async def my_subs(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Установить плечо'))
+async def take_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        leverage = cursor.execute(f'SELECT leverage FROM users WHERE user_id = {message.from_user.id}').fetchone()[0]
+        await bot.send_message(chat_id=message.from_user.id,
+                               text = f'Ваше текущее плечо: X{leverage} . По дефолту X1',
+                               reply_markup=kb_set_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Изменить'))
+async def edit_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'(Мы не рекомендуем ставить слишком большое плечо на время бета-тестирования. Оптимально будет до Х15)\n\nВведите размер плеча в виде одного числа:')
+        await Set_Leverage.leverage.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(state=Set_Leverage.leverage)
+async def set_leverage(message: types.Message, state = FSMContext):
+    async with state.proxy() as proxy:
+        proxy['leverage'] = message.text
+    leverage = await state.get_data()
+    conn, cursor = db_connect()
+    if message.text.isdigit() and (0 < int(message.text) <= 100):
+        cursor.execute(f'UPDATE users SET leverage = {int(message.text)} WHERE user_id = {message.from_user.id}')
+        await bot.send_message(chat_id=message.from_user.id,
+                               text = f'Теперь Ваше плечо: X{leverage["leverage"]} . По дефолту X1',
+                               reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Плечо слишком большое либо введено некорректно.',
+                               reply_markup=kb_set_leverage)
+    conn.commit()
+    cursor.close()
+    await state.finish()
+
+
+@dp.message_handler(Text(equals='Настройки бота'))
+async def settings(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_photo(chat_id=message.from_user.id,
+                               photo='https://wallpapers.com/images/hd/cool-neon-blue-lf1zlxnvobv5cn1r.jpg',
+                               caption='Настройки бота',
+                               reply_markup=kb_settings)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Управление плечом'))
+async def control_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_photo(chat_id=message.from_user.id,
+                               photo='https://i.pinimg.com/originals/c2/9a/12/c29a120f645acc23afb709366c06b0bb.jpg',
+                               caption='Настройте с помощью клавиатуры',
+                               reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+        
+
+@dp.message_handler(Text(equals='Сбросить плечо'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE users SET leverage = 1 WHERE user_id = {message.from_user.id}')
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Плечо сброшено. \nТеперь ваше плечо является X1 (по дефолту)',
+                               reply_markup=kb_leverage)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
