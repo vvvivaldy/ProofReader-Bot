@@ -39,6 +39,28 @@ async def leverage(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
     
 
+# Хендлер профита и убытка
+@dp.message_handler(Text(equals="Профит/убыток"))
+async def profit(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        profit = cursor.execute(f"""SELECT profit FROM ordes WHERE user_id = '{message.from_user.id}'""",
+                              (message.from_user.id,)).fetchall()
+        profit_total = 0
+        for i in profit:
+            profit_total += i[0]
+        if profit_total < 0:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваш убыток составляет <b>{profit_total}$</b>")
+        elif profit_total == 0:
+            await bot.send_message(chat_id=message.from_user.id, text="Ваша прибыль составляет <b>0$</b>")
+        else:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваша прибыль составляет <b>{profit_total}$</b>")
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+
 '''@dp.message_handler(Text(equals="Максимальное плечо монеты"))
 async def coin_info(message: types.Message, state: FSMContext) -> None:
     if paid_validate(message.from_user.id):
