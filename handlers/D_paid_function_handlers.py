@@ -726,7 +726,6 @@ async def set_leverage(message: types.Message, state=FSMContext):
         await state.finish()
 
 
-
 @dp.message_handler(Text(equals='Назад в настройки'))
 async def drop_leverage(message: types.Message):
     if paid_validate(message.from_user.id):
