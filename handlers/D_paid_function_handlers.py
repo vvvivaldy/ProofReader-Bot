@@ -335,15 +335,13 @@ SL ордер: {item[2]}
     if res != '':
         await bot.send_message(chat_id=message.from_user.id,
                                     text=res,
-                                    reply_markup=kb_trader)
+                                    reply_markup=kb_stat)
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                                    text='У вас нет открытых ордеров,которые были отслежены',
-                                    reply_markup=kb_trader)
+                                    text='У вас нет открытых ордеров, которые были отслежены при помощи ProofReader.',
+                                    reply_markup=kb_stat)
     return
    
-
-
 
 # Хендлер Баланса
 @dp.message_handler(Text(equals="Баланс"))
@@ -364,7 +362,7 @@ async def balance_func(message: types.Message):
         for obj in coins:
             total_balance_msg += f"<b>{obj['coin']}</b>: <b>{obj['equity']}</b>\n"
 
-        total_balance_msg += f"<b>Общий баланс: {total_balance}</b> $"
+        total_balance_msg += f"\n<b>Общий баланс: {total_balance}</b> $"
         await bot.send_message(chat_id=message.from_user.id,
                                text=total_balance_msg,
                                parse_mode="HTML")
@@ -605,7 +603,7 @@ async def set_leverage(message: types.Message, state=FSMContext):
                                    f'Вы должны написать только число. Повторите попытку.')
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы вернулись в настройки бота",
+                               text="Вы вернулись в настройки бота.",
                                reply_markup=kb_settings)
         await state.reset_state()
         await state.finish()
@@ -616,8 +614,40 @@ async def set_leverage(message: types.Message, state=FSMContext):
 async def drop_leverage(message: types.Message):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,
-                               text="Вы вернулись в настройки бота",
+                               text="Вы вернулись в настройки бота.",
                                reply_markup=kb_settings)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Назад в профиль'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в профиль.",
+                               reply_markup=kb_prof)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Назад в меню информации'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы вернулись в меню информации.",
+                               reply_markup=kb_inform)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='О нас'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=DESCR, parse_mode="HTML")
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")

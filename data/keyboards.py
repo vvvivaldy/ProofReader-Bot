@@ -37,7 +37,7 @@ prof_b2 = KeyboardButton("Статистика")
 prof_b3 = KeyboardButton("Подписка")
 b_all_trader_sub = KeyboardButton('Мои трейдеры')
 prof_b4 = KeyboardButton("Назад")
-kb_prof.add(prof_b1, prof_b2).add(prof_b3, b_all_trader_sub).add(prof_b4)
+kb_prof.add(prof_b2, prof_b1).add(prof_b3, b_all_trader_sub).add(prof_b4)
 
 # Клавиатура настройки бота
 kb_settings = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -79,7 +79,7 @@ info_b1 = KeyboardButton("О нас")
 info_b2 = KeyboardButton("Инструкция")
 info_b3 = KeyboardButton("Наши трейдеры")
 info_b4 = KeyboardButton("Пользовательское соглашение")
-kb_inform.add(info_b1, info_b2).add(info_b3).add(info_b4).add(sb3)
+kb_inform.add(info_b1, info_b2).add(info_b3, info_b4).add(sb3)
 
 # Клавиатура вида контракта
 kb_contract = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -93,6 +93,10 @@ kb_instruct = ReplyKeyboardMarkup(resize_keyboard=True)
 b_ins1 = KeyboardButton("Как создать API ключ?")
 b_ins2 = KeyboardButton("❌Предостережения❌")
 kb_instruct.add(b_ins1).add(b_ins2).add(sb3)
+
+kb_instruct2 = ReplyKeyboardMarkup(resize_keyboard=True)
+basd = KeyboardButton("Назад в меню информации")
+kb_instruct2.add(b_ins1).add(b_ins2).add(basd)
 
 # Клавиатура админ панели
 kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -128,9 +132,9 @@ kb_trader2.add(trade1, trade2).add(trade3, b_edit_api).add(trade5)
 kb_stat = ReplyKeyboardMarkup(resize_keyboard=True)
 stat_b1 = KeyboardButton("Открытые сделки")
 stat_b2 = KeyboardButton("Мои активы")
-stat_b3 = KeyboardButton("Баланс")
 stat_b4 = KeyboardButton("Профит/убыток")
-kb_stat.add(stat_b1, stat_b2).add(stat_b3, stat_b4)
+stat_b5 = KeyboardButton("Назад в профиль")
+kb_stat.add(stat_b1, stat_b2).add(stat_b4).add(stat_b5)
 
 
 # Клавиатура ключей

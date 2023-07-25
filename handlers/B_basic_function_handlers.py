@@ -80,10 +80,16 @@ async def info(message: types.Message):
 # Хендлер Инструкции
 @dp.message_handler(Text(equals="Инструкция"))
 async def descr_func(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id,
-                           text=INSTRUCT,
-                           parse_mode="HTML",
-                           reply_markup=kb_instruct)
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=INSTRUCT,
+                               parse_mode="HTML",
+                               reply_markup=kb_instruct2)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=INSTRUCT,
+                               parse_mode="HTML",
+                               reply_markup=kb_instruct)
 
 
 # хендлер вывода трейдеров
