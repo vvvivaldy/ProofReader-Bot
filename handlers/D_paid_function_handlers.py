@@ -447,7 +447,8 @@ async def open_orders(message: types.Message):
     conn, cursor = db_connect()
     data = cursor.execute(f"""SELECT order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, status, open_price, close_price, close_order_id, profit, qty FROM orders WHERE user_id = '{message.from_user.id}'""").fetchall()
     res = ''
-    for item in data:
+    if data[0][7] == "open":
+        for item in data:
                 res+=f"""
 Базовый ордер: {item[0]}
 TP ордер: {item[1]}
@@ -455,18 +456,18 @@ SL ордер: {item[2]}
 Валютная пара: {item[3]}
 Уровень TakeProfit: {item[4]}
 Уровень StopLoss: {item[5]}
-Уровень открытия базового ордера: {item[6]}
-Кол-во монет: {item[7]}
+Уровень открытия базового ордера: {item[8]}
+Кол-во монет: {item[12]}
 ----------------------
 """
     if res != '':
         await bot.send_message(chat_id=message.from_user.id,
                                     text=res,
-                                    reply_markup=kb_trader)
+                                    reply_markup=kb_stat)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                     text='У вас нет открытых ордеров,которые были отслежены',
-                                    reply_markup=kb_trader)
+                                    reply_markup=kb_stat)
     return
    
 
