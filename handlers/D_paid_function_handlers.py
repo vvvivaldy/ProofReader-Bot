@@ -376,16 +376,16 @@ async def my_subs(message: types.Message):
     if paid_validate(message.from_user.id):
         conn, cursor = db_connect()
         subs = list(cursor.execute(f'SELECT trader_sub_id FROM users WHERE user_id = {message.from_user.id}').fetchone()[0].split())
-        traders = 'Трейдеры,на которых вы подписаны: \n\n'
+        traders = '<b>Трейдеры,на которых вы подписаны:</b> \n\n'
         if len(subs) > 0:
             for i in subs:
                 info = cursor.execute(f'SELECT name FROM traders WHERE trader_id = {i} AND status = "trader"').fetchone()[0]
-                traders += f'{info} \n'
+                traders += f'• {info} \n'
         else:
             traders += 'Вы ни на кого не подписаны'
         await bot.send_message(chat_id=message.from_user.id,
                                text=traders,
-                               reply_markup=kb_reg)
+                               reply_markup=kb_reg, parse_mode="HTML")
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
@@ -648,6 +648,67 @@ async def drop_leverage(message: types.Message):
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id,
                                text=DESCR, parse_mode="HTML")
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals='Остановить работу'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        data = cursor.execute(f"SELECT flag FROM users WHERE user_id = {message.from_user.id}").fetchone()
+        if data[0] == "true":
+            cursor.execute(f"UPDATE users SET flag = 'false' WHERE user_id = {message.from_user.id}")
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="<b>ProofReader прекратил отслеживание❌</b> Нажмите на кнопку \"Запустить"
+                                        " ProofReader\", чтобы бот снова начал получать ордера профессионального"
+                                        " трейдера.",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_reg)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="ProofReader не запущен.",
+                                   parse_mode="HTML",
+                                   reply_markup=kb_reg)
+        conn.commit()
+        cursor.close()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+@dp.message_handler(Text(equals='Запустить ProofReader'))
+async def drop_leverage(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        data = cursor.execute(f"SELECT sum, flag, trader_sub_id, leverage FROM users WHERE user_id = {message.from_user.id}").fetchone()
+        if data[0] != "" and data[1] == "false" and data[2] != "":
+            cursor.execute(f"UPDATE users SET flag = 'true' WHERE user_id = {message.from_user.id}")
+            if "$" in data[0]:
+                await bot.send_message(chat_id=message.from_user.id,
+                                       text="<b>Вы запустили Proofreader✅</b> Теперь все сделки, которые совершает трейдер, "
+                                            f"будут отоброжаться и у вас!\n\n<b>Цена одной сделки:</b> <u>{data[0]}</u>\n"
+                                            f"<b>Плечо, используемое для каждого ордера:</b> <u>{data[3]} x</u>",
+                                       parse_mode="HTML", reply_markup=kb_reg_work)
+            else:
+                await bot.send_message(chat_id=message.from_user.id,
+                                       text=f"<b>Вы запустили Proofreader✅</b> Теперь все сделки, которые совершает трейдер, "
+                                            f"будут отоброжаться и у вас!\n\n<b>Цена одной сделки:</b> <u>{data[0]} от депозита</u>\n"
+                                            f"<b>Плечо, используемое для каждого ордера:</b> <u>{data[3]} x</u>",
+                                       parse_mode="HTML", reply_markup=kb_reg_work)
+            conn.commit()
+            cursor.close()
+        else:
+            text = ""
+            if "$" not in data[0] and "%" not in data[0]:
+                text += "• Вы не указали сумму сделки. Сделайте это в настройках бота.\n"
+            if data[1] != "false":
+                text += "• ProofReader уже работает. Напишите \"Остановить работу\", если хотите приостановить бота.\n"
+            if len(data[2]) == 0:
+                text += "• Вы не подписаны ни на одного трейдера. Сделайте это, нажав на кнопку \"Подписка на трейдера\"."
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text=text,
+                                   parse_mode="HTML")
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")

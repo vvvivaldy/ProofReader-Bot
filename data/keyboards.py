@@ -24,12 +24,12 @@ b_profile = KeyboardButton("Профиль")
 b_settings = KeyboardButton("Настройки бота")
 b_subscr = KeyboardButton("Подписка на трейдера")
 b_info = KeyboardButton("Информация")
-b_start = KeyboardButton("Начать торговлю")
-# b_edit_api = KeyboardButton('Редактировать API')
-# b_leverage = KeyboardButton('Кредитное плечо')
+b_start = KeyboardButton("Запустить ProofReader")
 kb_reg.add(b_profile,b_settings).add(b_subscr,b_info).add(b_start)
 
-
+kb_reg_work = ReplyKeyboardMarkup(resize_keyboard=True)
+b_stop = KeyboardButton("Остановить работу")
+kb_reg_work.add(b_profile,b_settings).add(b_subscr,b_info).add(b_stop)
 # Клавиатура профиля
 kb_prof = ReplyKeyboardMarkup(resize_keyboard=True)
 prof_b1 = KeyboardButton("Баланс")
