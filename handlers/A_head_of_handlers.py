@@ -1,50 +1,52 @@
 from data.imports import *
 
-
 dotenv.load_dotenv(dotenv.find_dotenv())
 
 bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
-admin_ids = (os.getenv('NIKITA_ID'),os.getenv('MISHA_ID'),os.getenv('ROMA_ID'))
+admin_ids = (os.getenv('NIKITA_ID'), os.getenv('MISHA_ID'), os.getenv('ROMA_ID'))
 stream_websockets = {}
 
+
 # проверка на нужнуб клавиатуру трейдера
-def true_kb(id: int) -> ReplyKeyboardMarkup:
+def true_kb(trader_id: int) -> ReplyKeyboardMarkup:
     global stream_websockets
-    if f'stream_{id}' in stream_websockets:
+    if f'stream_{trader_id}' in stream_websockets:
         return kb_trader2
     return kb_trader
-        
+
 
 # проверка на трейдера
-def trader_validate(id: int, mode = True) -> bool:
+def trader_validate(user_id: int, mode=True) -> bool:
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     try:
-        res = cursor.execute(f'SELECT status FROM traders WHERE trader_id={id};').fetchone()[0]
+        res = cursor.execute(f'SELECT status FROM traders WHERE trader_id={user_id};').fetchone()[0]
         if res == 'trader':
             return True
         elif res == 'block' and mode:
-            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                            f'/sendMessage?chat_id={id}&text=Вы присутствуете в черном списке. Доступ запрещен.&reply_markup={ReplyKeyboardRemove()}')
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}'
+                         f'/sendMessage?chat_id={user_id}&text=Вы присутствуете в черном списке. Доступ '
+                         f'запрещен.&reply_markup={ReplyKeyboardRemove()}')
         return False
-    except:
+    except Exception:
         return False
 
 
 # Проверка на подписку
-def paid_validate(id: int, mode = True) -> bool:
+def paid_validate(user_id: int, mode=True) -> bool:
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
     try:
-        res = cursor.execute(f'SELECT status FROM users WHERE user_id={id};').fetchone()[0]
+        res = cursor.execute(f'SELECT status FROM users WHERE user_id={user_id};').fetchone()[0]
         if res == 'paid':
             return True
         elif res == 'block' and mode:
-            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                            f'/sendMessage?chat_id={id}&text=Вы присутствуете в черном списке. Доступ запрещен.&reply_markup={ReplyKeyboardRemove()}')
+            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}'
+                         f'/sendMessage?chat_id={user_id}&text=Вы присутствуете в черном списке. Доступ '
+                         f'запрещен.&reply_markup={ReplyKeyboardRemove()}')
         return False
-    except:
+    except Exception:
         return False
 
 
@@ -54,26 +56,28 @@ def db_connect():
     cursor = conn.cursor()
     return conn, cursor
 
+
 # Расшифровка
 def decrypt_api(api, key=None):
-    if key == None:
-        cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
+    if key is None:
+        cipher = Fernet(bytes(os.getenv('CIPHER_KEY') + '=', encoding='utf-8'))
     else:
-        cipher = Fernet(bytes(key+'=',encoding='utf-8'))
+        cipher = Fernet(bytes(key + '=', encoding='utf-8'))
     if type(api) == bytes:
         return cipher.decrypt(api).decode('utf-8')
-    return cipher.decrypt(bytes(api[2:-1],encoding='utf-8')).decode('utf-8')
+    return cipher.decrypt(bytes(api[2:-1], encoding='utf-8')).decode('utf-8')
 
 
 # Шифровка
 def encrypt_api(api):
-    cipher = Fernet(bytes(os.getenv('CIPHER_KEY')+'=',encoding='utf-8'))
-    return cipher.encrypt(bytes(api,encoding='utf-8'))
+    cipher = Fernet(bytes(os.getenv('CIPHER_KEY') + '=', encoding='utf-8'))
+    return cipher.encrypt(bytes(api, encoding='utf-8'))
 
 
 # Проверка на админа
 async def admin_validate(message: types.Message):
-    if str(message.from_user.id) in admin_ids: return True
+    if str(message.from_user.id) in admin_ids:
+        return True
     return False
 
 
@@ -87,7 +91,9 @@ def next_month(today):
 async def db_validate(cursor, conn, message, info=None):
     # Если нет в бд
     if info is None:
-        cursor.execute(f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '', '', '', '', '1', 'false', '');""")
+        cursor.execute(
+            f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '', '', '', '', '1', 
+            'false', '');""")
         cursor.execute("UPDATE counter SET count_users_all_time = count_users_all_time + 1")
         conn.commit()
     # Если есть в бд
