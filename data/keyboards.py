@@ -11,7 +11,7 @@ b2 = KeyboardButton('Наши Трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
 b5 = KeyboardButton('Информация')
-kb_free.add(b1,b3).add(b2, b5).add(b4)
+kb_free.add(b1, b3).add(b2, b5).add(b4)
 
 # Платная Клавиатура (Незареганный аккаунт)
 kb_unreg = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -25,11 +25,11 @@ b_settings = KeyboardButton("Настройки бота")
 b_subscr = KeyboardButton("Подписка на трейдера")
 b_info = KeyboardButton("Информация")
 b_start = KeyboardButton("Запустить ProofReader")
-kb_reg.add(b_profile,b_settings).add(b_subscr,b_info).add(b_start)
+kb_reg.add(b_profile, b_settings).add(b_subscr, b_info).add(b_start)
 
 kb_reg_work = ReplyKeyboardMarkup(resize_keyboard=True)
 b_stop = KeyboardButton("Остановить работу")
-kb_reg_work.add(b_profile,b_settings).add(b_subscr, b_info).add(b_stop)
+kb_reg_work.add(b_profile, b_settings).add(b_subscr, b_info).add(b_stop)
 
 # Клавиаутра дат
 kb_date = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -63,16 +63,16 @@ kb_subscribe_on_trader.add(sb1).add(sb2).add(sb3)
 
 # Клавиатура подтверждения отписки
 kb_confirmation = ReplyKeyboardMarkup(resize_keyboard=True)
-сb1 = KeyboardButton("ДА")
-сb2 = KeyboardButton("НЕТ")
+cb1 = KeyboardButton("ДА")
+cb2 = KeyboardButton("НЕТ")
 cb3 = KeyboardButton("Назад в меню подписки")
-kb_confirmation.add(сb1, сb2).add(cb3)
+kb_confirmation.add(cb1, cb2).add(cb3)
 
 # Клавиатура плеча
 kb_leverage = ReplyKeyboardMarkup(resize_keyboard=True)
 lb1 = KeyboardButton("Максимальное плечо монеты")
 lb2 = KeyboardButton('Установить плечо')
-kb_leverage.add(lb1,lb2).add(back_to_settings)
+kb_leverage.add(lb1, lb2).add(back_to_settings)
 
 
 # Клава установки плеча

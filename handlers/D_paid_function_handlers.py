@@ -1,4 +1,4 @@
-from handlers.C_admin_panel_handlers  import *
+from handlers.C_admin_panel_handlers import *
 from callbacks.paid_callbacks import *
 
 
