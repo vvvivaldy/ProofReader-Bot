@@ -29,6 +29,14 @@ b_start = KeyboardButton("Начать торговлю")
 # b_leverage = KeyboardButton('Кредитное плечо')
 kb_reg.add(b_profile,b_settings).add(b_subscr,b_info).add(b_start)
 
+# Клавиаутра дат
+kb_date = ReplyKeyboardMarkup(resize_keyboard=True)
+b_week = KeyboardButton("Неделя")
+b_month = KeyboardButton("Месяц")
+b_year = KeyboardButton("Год")
+b_back = KeyboardButton("Назад в статистику")
+kb_date.add(b_week, b_month, b_year).add(b_back)
+                        
 
 # Клавиатура профиля
 kb_prof = ReplyKeyboardMarkup(resize_keyboard=True)
