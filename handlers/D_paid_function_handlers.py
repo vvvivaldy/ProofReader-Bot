@@ -39,7 +39,119 @@ async def leverage(message: types.Message):
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
     
 
-'''@dp.message_handler(Text(equals="Максимальное плечо монеты"))
+# Хендлер профита и убытка
+@dp.message_handler(Text(equals="Профит/убыток"))
+async def profit(message: types.Message):
+    if paid_validate(message.from_user.id):
+        await bot.send_message(chat_id=message.from_user.id, text="Выберите период", reply_markup=kb_date)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+@dp.message_handler(Text(equals="Неделя"))
+async def week(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        current_date = datetime.now().date()
+        date_1_week_ago = current_date - timedelta(weeks=1)
+        dates_date = []
+        dates_total = []
+        profit = 0
+        dates = cursor.execute(f"""SELECT date_1 from orders WHERE user_id = '{message.from_user.id}'""").fetchall()
+        for i in dates:
+            date_object = datetime.strptime(i[0], '%Y-%m-%d').date()
+            dates_date.append(date_object)
+        for i in dates_date:
+            if i >= date_1_week_ago:
+                dates_total.append(i)
+        for i in range(len(dates_total)):
+            dates_total[i] = dates_total[i].strftime("%Y-%m-%d")
+        for i in dates_total:
+            profit_1 = cursor.execute(f"""SELECT profit FROM orders WHERE user_id = '{message.from_user.id}' AND date_1 = '{i}'""").fetchone()[0]
+            profit_1 = int(profit_1)
+            profit += profit_1
+        if profit < 0:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваш убыток составляет <b>{profit}$</b>", parse_mode="HTML")
+        elif profit == 0:
+            await bot.send_message(chat_id=message.from_user.id, text="Ваша прибыль составляет <b>0$</b>", parse_mode="HTML")
+        else:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваша прибыль составляет <b>{profit}$</b>", parse_mode="HTML")
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+@dp.message_handler(Text(equals="Месяц"))
+async def week(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        current_date = datetime.now().date()
+        one_month = date.today() + relativedelta(months=-1)
+        dates_date = []
+        dates_total = []
+        profit = 0
+        dates = cursor.execute(f"""SELECT date_1 from orders WHERE user_id = '{message.from_user.id}'""").fetchall()
+        for i in dates:
+            date_object = datetime.strptime(i[0], '%Y-%m-%d').date()
+            dates_date.append(date_object)
+        for i in dates_date:
+            if i >= one_month:
+                dates_total.append(i)
+        for i in range(len(dates_total)):
+            dates_total[i] = dates_total[i].strftime("%Y-%m-%d")
+        for i in dates_total:
+            profit_1 = cursor.execute(f"""SELECT profit FROM orders WHERE user_id = '{message.from_user.id}' AND date_1 = '{i}'""").fetchone()[0]
+            profit_1 = int(profit_1)
+            profit += profit_1
+        if profit < 0:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваш убыток составляет <b>{profit}$</b>", parse_mode="HTML")
+        elif profit == 0:
+            await bot.send_message(chat_id=message.from_user.id, text="Ваша прибыль составляет <b>0$</b>", parse_mode="HTML")
+        else:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваша прибыль составляет <b>{profit}$</b>", parse_mode="HTML")
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals="Год"))
+async def week(message: types.Message):
+    if paid_validate(message.from_user.id):
+        conn, cursor = db_connect()
+        current_date = datetime.now().date()
+        current_datee_str = current_date.strftime("%Y-%m-%d")
+        cur = datetime.fromisoformat(current_datee_str)
+        one_year = cur - relativedelta(years=1)
+        dates_date = []
+        dates_total = []
+        profit = 0
+        dates = cursor.execute(f"""SELECT date_1 from orders WHERE user_id = '{message.from_user.id}'""").fetchall()
+        for i in dates:
+            date_object = datetime.strptime(i[0], '%Y-%m-%d').date()
+            dates_date.append(date_object)
+        for i in dates_date:
+            if i >= one_year.date():
+                dates_total.append(i)
+        for i in range(len(dates_total)):
+            dates_total[i] = dates_total[i].strftime("%Y-%m-%d")
+        for i in dates_total:
+            profit_1 = cursor.execute(f"""SELECT profit FROM orders WHERE user_id = '{message.from_user.id}' AND date_1 = '{i}'""").fetchone()[0]
+            profit_1 = int(profit_1)
+            profit += profit_1
+        if profit < 0:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваш убыток составляет <b>{profit}$</b>", parse_mode="HTML")
+        elif profit == 0:
+            await bot.send_message(chat_id=message.from_user.id, text="Ваша прибыль составляет <b>0$</b>", parse_mode="HTML")
+        else:
+            await bot.send_message(chat_id=message.from_user.id, text=f"Ваша прибыль составляет <b>{profit}$</b>", parse_mode="HTML")
+
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals="Максимальное плечо монеты"))
 async def coin_info(message: types.Message, state: FSMContext) -> None:
     if paid_validate(message.from_user.id):
         await bot.send_message(chat_id=message.from_user.id, text="Выберите вид контракта -> Линейный/Обратный", reply_markup=kb_contract)
@@ -74,7 +186,12 @@ async def back(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню плеча", reply_markup=kb_leverage)
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                               text="Мы не предусмотрели данный запрос. Повторите попытку.")'''
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
+
+
+@dp.message_handler(Text(equals="Назад в статистику"))
+async def back_statistics(message: types.Message):
+    await bot.send_message(chat_id=message.from_user.id, text="Вы вернулись в меню статистики", reply_markup=kb_stat)
 
 
 @dp.message_handler(state=Leverage.leverage_linear)
@@ -320,7 +437,8 @@ async def open_orders(message: types.Message):
     conn, cursor = db_connect()
     data = cursor.execute(f"""SELECT order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, status, open_price, close_price, close_order_id, profit, qty FROM orders WHERE user_id = '{message.from_user.id}'""").fetchall()
     res = ''
-    for item in data:
+    if data[0][7] == "open":
+        for item in data:
                 res+=f"""
 Базовый ордер: {item[0]}
 TP ордер: {item[1]}
@@ -328,20 +446,19 @@ SL ордер: {item[2]}
 Валютная пара: {item[3]}
 Уровень TakeProfit: {item[4]}
 Уровень StopLoss: {item[5]}
-Уровень открытия базового ордера: {item[6]}
-Кол-во монет: {item[7]}
+Уровень открытия базового ордера: {item[8]}
+Кол-во монет: {item[12]}
 ----------------------
 """
     if res != '':
         await bot.send_message(chat_id=message.from_user.id,
-                                    text=res,
+                                text=res,
                                     reply_markup=kb_stat)
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                                    text='У вас нет открытых ордеров, которые были отслежены при помощи ProofReader.',
-                                    reply_markup=kb_stat)
+                               text='У вас нет открытых ордеров, которые были отслежены при помощи ProofReader.',
+                               reply_markup=kb_stat)
     return
-   
 
 # Хендлер Баланса
 @dp.message_handler(Text(equals="Баланс"))

@@ -29,7 +29,16 @@ kb_reg.add(b_profile,b_settings).add(b_subscr,b_info).add(b_start)
 
 kb_reg_work = ReplyKeyboardMarkup(resize_keyboard=True)
 b_stop = KeyboardButton("Остановить работу")
-kb_reg_work.add(b_profile,b_settings).add(b_subscr,b_info).add(b_stop)
+kb_reg_work.add(b_profile,b_settings).add(b_subscr, b_info).add(b_stop)
+
+# Клавиаутра дат
+kb_date = ReplyKeyboardMarkup(resize_keyboard=True)
+b_week = KeyboardButton("Неделя")
+b_month = KeyboardButton("Месяц")
+b_year = KeyboardButton("Год")
+b_back = KeyboardButton("Назад в статистику")
+kb_date.add(b_week, b_month, b_year).add(b_back)
+
 # Клавиатура профиля
 kb_prof = ReplyKeyboardMarkup(resize_keyboard=True)
 prof_b1 = KeyboardButton("Баланс")

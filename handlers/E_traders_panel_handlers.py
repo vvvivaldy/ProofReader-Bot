@@ -25,14 +25,17 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                                 f'/sendMessage?chat_id={self.id}&text=Напишите в тех поддержку об ошибке 908 и пришлите скриншот действий с ботом')
                     return
                 if not mode:
+                    current_date = datetime.now().date()
+                    current_date = current_date.strftime('%Y-%m-%d')
                     cursor.execute(f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                                f" status, open_price, close_price, close_order_id, profit, qty) VALUES ('{ord[value]['orderId']}', "
+                                f" status, open_price, close_price, close_order_id, profit, qty, date) VALUES ('{ord[value]['orderId']}', "
                                 f"'{tp['orderId']}', '{sl['orderId']}' ,"
                                 f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
-                                f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}');")
+                                f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}', '{current_date}');")
                     conn.commit()
                 else:
-                    cursor.execute(f"UPDATE orders SET take_profit = {ord[value]['takeProfit']}, stop_loss = {ord[value]['stopLoss']}, order_id = '{ord[value]['orderId']}', qty = qty + {ord[value]['qty']} WHERE trader_id = {self.id} AND trade_pair = '{ord[value]['symbol']}' AND status = 'open'")
+                    current_date = datetime.now().date()
+                    cursor.execute(f"UPDATE orders SET take_profit = {ord[value]['takeProfit']}, stop_loss = {ord[value]['stopLoss']}, order_id = '{ord[value]['orderId']}', qty = qty + {ord[value]['qty']}, date_1 = '{current_date}' WHERE trader_id = {self.id} AND trade_pair = '{ord[value]['symbol']}' AND status = 'open'")
                     conn.commit()
 
             else:
