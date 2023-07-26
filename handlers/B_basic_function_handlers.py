@@ -39,11 +39,13 @@ async def start_func(message: types.Message):
                                             f"на кнопку \"Описание\" \nАвторизуйтесь для начала работы.",
                                     reply_markup=kb_unreg)
         else:
-            await bot.send_message(chat_id=message.from_user.id,
-                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                        f"Подробнее ты можешь узнать нажав  "
-                                        f"на кнопку \"Описание\"",
-                                reply_markup=kb_free)
+            status = cursor.execute(f"SELECT status FROM users WHERE user_id='{message.from_user.id}'").fetchone()[0]
+            if status != "block":
+                await bot.send_message(chat_id=message.from_user.id,
+                                    text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                            f"Подробнее ты можешь узнать нажав  "
+                                            f"на кнопку \"Описание\"",
+                                    reply_markup=kb_free)
         # Подключение к бд
         info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
         await db_validate(cursor, conn, message, info)
@@ -54,8 +56,15 @@ async def start_func(message: types.Message):
 # Хендлер Описания
 @dp.message_handler(Text(equals="Описание"))
 async def descr_func(message: types.Message):
-    await bot.send_message(chat_id=message.from_user.id,
-                           text=DESCR, parse_mode="HTML")
+    _, cursor = db_connect()
+    status = cursor.execute(f"SELECT status FROM users WHERE user_id='{message.from_user.id}'").fetchone()[0]
+    if status != "block":
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=DESCR, parse_mode="HTML")
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Вы присутствуете в черном списке. Доступ запрещен. Обратитесь в тех. поддержку.",
+                               parse_mode="HTML")
 
 
 # хендлер инфо
@@ -74,7 +83,9 @@ async def info(message: types.Message):
         await message.answer(text=INFO, parse_mode='html', reply_markup=kb)
     else:
         kb = kb_free
-        await message.answer(text=INFO, parse_mode='html',reply_markup=kb)
+        status = cursor.execute(f"SELECT status FROM users WHERE user_id='{message.from_user.id}'").fetchone()[0]
+        if status != "block":
+            await message.answer(text=INFO, parse_mode='html', reply_markup=kb)
 
 
 # Хендлер Инструкции
@@ -86,10 +97,13 @@ async def descr_func(message: types.Message):
                                parse_mode="HTML",
                                reply_markup=kb_instruct2)
     else:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text=INSTRUCT,
-                               parse_mode="HTML",
-                               reply_markup=kb_instruct)
+        _, cursor = db_connect()
+        status = cursor.execute(f"SELECT status FROM users WHERE user_id='{message.from_user.id}'").fetchone()[0]
+        if status != "block":
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text=INSTRUCT,
+                                   parse_mode="HTML",
+                                   reply_markup=kb_instruct)
 
 
 # хендлер вывода трейдеров
@@ -207,25 +221,38 @@ async def menu_func(message: types.Message):
     cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
     result = cursor.fetchone()
     if result is not None:
-        if result[0] in ("free",'block'):
-            kb = kb_free
-        elif result[0] == "paid" and result[1] != "":
-            kb = kb_reg
-        elif result[0] == "paid" and result[1] == "":
-            kb = kb_unreg
-    else:
-        data = cursor.execute("SELECT api_key, status FROM traders WHERE trader_id = ?", (message.from_user.id,)).fetchone()
-        if data[1] == 'block':
-            kb = kb_free
-        elif data[0] is not None:
-            kb = kb_reg
-        else:
-            kb = kb_unreg
+        if result[0] != "block":
+            if result[0] == "free":
+                kb = kb_free
+            elif result[0] == "paid" and result[1] != "":
+                kb = kb_reg
+            elif result[0] == "paid" and result[1] == "":
+                kb = kb_unreg
 
-    await bot.send_message(chat_id=message.from_user.id,
+            await bot.send_message(chat_id=message.from_user.id,
                                    text="Вы вернулись в меню",
                                    parse_mode="HTML",
                                    reply_markup=kb)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы присутствуете в черном списке. Доступ запрещен. Обратитесь в тех. поддержку.",
+                                   parse_mode="HTML")
+    else:
+        data = cursor.execute("SELECT api_key, status FROM traders WHERE trader_id = ?", (message.from_user.id,)).fetchone()
+        if data[1] != "block":
+            if data[0] is not None:
+                kb = kb_reg
+            else:
+                kb = kb_unreg
+
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы вернулись в меню",
+                                   parse_mode="HTML",
+                                   reply_markup=kb)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Вы присутствуете в черном списке. Доступ запрещен. Обратитесь в тех. поддержку.",
+                                   parse_mode="HTML")
 
 
 # Хендлер Предостережения

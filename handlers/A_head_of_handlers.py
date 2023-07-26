@@ -44,7 +44,7 @@ def paid_validate(user_id: int, mode=True) -> bool:
         elif res == 'block' and mode:
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}'
                          f'/sendMessage?chat_id={user_id}&text=Вы присутствуете в черном списке. Доступ '
-                         f'запрещен.&reply_markup={ReplyKeyboardRemove()}')
+                         f'запрещен. Обратитесь в тех. поддержку.&reply_markup={ReplyKeyboardRemove()}')
         return False
     except Exception:
         return False
