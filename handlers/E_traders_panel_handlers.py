@@ -145,7 +145,6 @@ def tracking(ws, tmpstream=None, mode='off'):
 async def go_stream(id):
     conn, cursor = db_connect()
     api_key, api_secret = cursor.execute(f'SELECT api_key,api_secret FROM traders WHERE trader_id = {id}').fetchall()[0]
-
     ws = WebSocket(
     testnet=False,
     channel_type="private",
