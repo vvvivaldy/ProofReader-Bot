@@ -7,7 +7,7 @@ back_to_settings = KeyboardButton('Назад в настройки')
 # Бесплатная Клавиатура
 kb_free = ReplyKeyboardMarkup(resize_keyboard=True)
 b1 = KeyboardButton("Описание")
-b2 = KeyboardButton('Наши Трейдеры')
+b2 = KeyboardButton('Наши трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
 b5 = KeyboardButton('Информация')

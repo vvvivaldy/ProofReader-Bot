@@ -133,7 +133,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                             f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
         
 
-def tracking(ws,tmpstream = None, mode = 'off'):
+def tracking(ws, tmpstream=None, mode='off'):
     if mode == 'off':
         ws.exit()
     elif mode == 'on' and isinstance(tmpstream, TempStream):

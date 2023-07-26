@@ -765,7 +765,7 @@ async def set_leverage(message: types.Message, state=FSMContext):
                 await state.finish()
             else:
                 await bot.send_message(message.chat.id,
-                                       f'Вы указали недопустимое число, или на вашем деривативном счету '
+                                       f'Вы указали недопустимое число, или на вашем счету '
                                        f'не достаточно средств. Повторите попытку.')
 
         except ValueError:
