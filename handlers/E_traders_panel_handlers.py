@@ -28,7 +28,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                     current_date = datetime.now().date()
                     current_date = current_date.strftime('%Y-%m-%d')
                     cursor.execute(f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                                f" status, open_price, close_price, close_order_id, profit, qty, date) VALUES ('{ord[value]['orderId']}', "
+                                f" status, open_price, close_price, close_order_id, profit, qty, date_1) VALUES ('{ord[value]['orderId']}', "
                                 f"'{tp['orderId']}', '{sl['orderId']}' ,"
                                 f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
                                 f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}', '{current_date}');")

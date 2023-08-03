@@ -88,13 +88,18 @@ SL ордер: {item[2]}
             return
 
         case 'pushOrder':
+            kb_trader = true_kb(callback.from_user.id, mode = True)
             global stream_websockets
             tmp = stream_websockets[f'stream_{callback.from_user.id}'][1]
             tmp.create_order_in_object(tmp.ord, tmp.value, mode = True)
             await callback.message.edit_text(text='У ваших подписчиков в данный момент есть открытый вами ордер на данной валютной паре. Вероятно, Вы хотите докупить и/или изменить стоп-ордера. Вы хотите отправить им ТОЛЬКО ЧТО СОЗДАННЫЙ ВАМИ ордер, или не будете?\n\n\n ВЫ ОТПРАВИЛИ ОРДЕР✅')
-            await bot.send_message(chat_id=callback.from_user.id, text='Отслеживание OFF❌', reply_markup=kb_trader)
+            
+            await bot.send_message(chat_id=callback.from_user.id, 
+                                   text='Отслеживание OFF❌',
+                                   reply_markup=kb_trader)
 
         case 'cancelOrder':
+            kb_trader = true_kb(callback.from_user.id, mode=True)
             await callback.message.edit_text(text='У ваших подписчиков в данный момент есть открытый вами ордер на данной валютной паре. Вероятно, Вы хотите докупить и/или изменить стоп-ордера. Вы хотите отправить им ТОЛЬКО ЧТО СОЗДАННЫЙ ВАМИ ордер, или не будете?\n\n\n ВЫ ОТМЕНИЛИ ОТПРАВКУ ОРДЕРА💥')
             await bot.send_message(chat_id=callback.from_user.id, text='Отслеживание OFF❌', reply_markup=kb_trader)
 
