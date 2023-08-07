@@ -6,46 +6,46 @@ from callbacks.basic_callbacks import *
 async def start_func(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    try:
+    if trader_validate(message.from_user.id):
         traders = cursor.execute('SELECT trader_id, api_key FROM traders;').fetchall()
         idx = [*map(lambda x: x[0], traders)].index(message.from_user.id)
         if traders[idx][1] is None or traders[idx][1] == '':
-            if trader_validate(message.from_user.id):
-                await bot.send_message(chat_id=message.from_user.id,
-                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
-                                    parse_mode="HTML",
-                                    reply_markup=kb_unreg)
-                cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
+            await bot.send_message(chat_id=message.from_user.id,
+                                text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader. Авторизуйтесь для начала работы.",
+                                parse_mode="HTML",
+                                reply_markup=kb_unreg)
+            cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
         else:
-            if trader_validate(message.from_user.id):
-                await bot.send_message(chat_id=message.from_user.id,
-                                    text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
-                                    parse_mode="HTML",
-                                    reply_markup=kb_trader)
-                cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
+            await bot.send_message(chat_id=message.from_user.id,
+                                text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
+                                parse_mode="HTML",
+                                reply_markup=kb_trader)
+            cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
         conn.commit()
-    except Exception as e:
-        if paid_validate(message.from_user.id):
-            if cursor.execute(f'SELECT api_key FROM users WHERE user_id = {message.from_user.id}').fetchone()[0] not in (None,''):
-                await bot.send_message(chat_id=message.from_user.id,
-                                    text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                            f"Подробнее ты можешь узнать нажав  "
-                                            f"на кнопку \"Описание\"",
-                                    reply_markup=kb_reg)
-            else:
-                await bot.send_message(chat_id=message.from_user.id,
-                                    text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                            f"Подробнее ты можешь узнать нажав  "
-                                            f"на кнопку \"Описание\" \nАвторизуйтесь для начала работы.",
-                                    reply_markup=kb_unreg)
+    elif paid_validate(message.from_user.id):
+        if cursor.execute(f'SELECT api_key FROM users WHERE user_id = {message.from_user.id}').fetchone()[0] not in (None,''):
+            await bot.send_message(chat_id=message.from_user.id,
+                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                        f"Подробнее ты можешь узнать нажав  "
+                                        f"на кнопку \"Описание\"",
+                                reply_markup=kb_reg)
         else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                        f"Подробнее ты можешь узнать нажав  "
+                                        f"на кнопку \"Описание\" \nАвторизуйтесь для начала работы.",
+                                reply_markup=kb_unreg)
+    else:
+        try:
             status = cursor.execute(f"SELECT status FROM users WHERE user_id='{message.from_user.id}'").fetchone()[0]
-            if status != "block":
-                await bot.send_message(chat_id=message.from_user.id,
-                                    text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                            f"Подробнее ты можешь узнать нажав  "
-                                            f"на кнопку \"Описание\"",
-                                    reply_markup=kb_free)
+        except:
+            status = ""
+        if status != "block":
+            await bot.send_message(chat_id=message.from_user.id,
+                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                        f"Подробнее ты можешь узнать нажав  "
+                                        f"на кнопку \"Описание\"",
+                                reply_markup=kb_free)
         # Подключение к бд
         info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
         await db_validate(cursor, conn, message, info)
@@ -133,7 +133,8 @@ async def toptraders(message: types.Message):
 async def buy(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    if cursor.execute(f'SELECT status FROM users WHERE user_id = {message.from_user.id};').fetchone()[0] != 'block':
+    a = cursor.execute(f'SELECT status FROM users WHERE user_id = {message.from_user.id};').fetchone()[0]
+    if a not in ('block', 'trader'):
         if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
             await bot.send_photo(message.chat.id,
                                 photo='https://i.postimg.cc/zBynYjZq/photo-2023-06-18-16-59-44.jpg',

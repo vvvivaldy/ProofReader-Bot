@@ -9,9 +9,9 @@ stream_websockets = {}
 
 
 # проверка на нужнуб клавиатуру трейдера
-def true_kb(trader_id: int) -> ReplyKeyboardMarkup:
+def true_kb(trader_id: int, mode = False) -> ReplyKeyboardMarkup:
     global stream_websockets
-    if f'stream_{trader_id}' in stream_websockets:
+    if f'stream_{trader_id}' in stream_websockets and not mode:
         return kb_trader2
     return kb_trader
 
