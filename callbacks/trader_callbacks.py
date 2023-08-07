@@ -83,7 +83,7 @@ SL ордер: {item[2]}
                                     reply_markup=kb_trader)
             else:
                 await bot.send_message(chat_id=callback.from_user.id,
-                                    text='У вас нет открытых ордеров,которые были отслежены.',
+                                    text='У вас еще не было сделок, которые были отслежены.',
                                     reply_markup=kb_trader)
             return
 
