@@ -177,13 +177,13 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                      f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
         
 
-def tracking(ws, tmpstream=None, mode='off'):
+def tracking(id, conn, cursor, mode='off'):
     if mode == 'off':
-        ws.exit()
-    elif mode == 'on' and isinstance(tmpstream, TempStream):
-        ws.order_stream(callback=tmpstream.handle_message)
-    else:
-        raise Exception('Вы передали какую-то хуйню в функцию tracking')
+        cursor.execute(f"UPDATE traders SET webstream = '0' WHERE trader_id = {id};")
+    elif mode == 'on':
+        cursor.execute(f"UPDATE traders SET webstream = '1' WHERE trader_id = {id};")
+    conn.commit()
+    cursor.close()
 
 
 async def go_stream(id):
@@ -196,22 +196,20 @@ async def go_stream(id):
     api_secret=decrypt_api(api_secret))
 
     tmp = TempStream(id, stop_stream)
-    tracking(ws, tmp, 'on')
+    tracking(id, conn, cursor, 'on')
     global stream_websockets
     stream_websockets[f'stream_{id}'] = (ws, tmp)
-
-    await bot.send_message(chat_id=id,
-                           text='Отслеживание ON✅',
-                           reply_markup=kb_trader2)
+    ws.order_stream(callback=tmp.handle_message)
     
 
 def stop_stream(id):
-    global stream_websockets
+    conn, cursor = db_connect()
+    #FIXME ИЗМЕНИТЬ try except!!!
     try:
-        ws = stream_websockets[f'stream_{id}'][0]
+        cursor.execute(f"SELECT webstream FROM traders WHERE trader_id = '{id}'")
     except:
         return False
-    tracking(ws)
+    tracking(id, conn, cursor)
     return True
 
 
@@ -321,7 +319,11 @@ async def trader_help(message: types.Message):
 @dp.message_handler(Text(equals='Вкл отслеживание'))
 async def trader_on(message: types.Message):
     if trader_validate(message.from_user.id):
-        await go_stream(message.from_user.id)
+        conn, cursor = db_connect()
+        tracking(message.from_user.id, conn, cursor, mode="on")
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Отслеживание ON✅",
+                               reply_markup=kb_trader2)
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")

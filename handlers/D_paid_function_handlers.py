@@ -1,4 +1,5 @@
 from handlers.C_admin_panel_handlers import *
+from handlers.E_traders_panel_handlers import *
 from callbacks.paid_callbacks import *
 
 
@@ -406,12 +407,18 @@ async def set_api(message: types.Message, state: FSMContext):
                                 WHERE user_id = {message.from_user.id}""")
         await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
 
+        conn.commit()
+        cursor.close()
+
     else:
-        cursor.execute(f"""UPDATE traders SET api_secret = "{api_secret}", api_key = "{api_key}", webstream = 'False'
+        cursor.execute(f"""UPDATE traders SET api_secret = "{api_secret}", api_key = "{api_key}", webstream = '0'
                            WHERE trader_id = {message.from_user.id}""")
         await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_trader)
-    conn.commit()
-    cursor.close()
+        conn.commit()
+        cursor.close()
+        await go_stream(message.from_user.id)
+
+
     await state.reset_state()
     await state.finish()
 
