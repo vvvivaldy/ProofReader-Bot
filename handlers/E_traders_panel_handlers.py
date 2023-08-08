@@ -125,7 +125,6 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
             self.create_order_in_object(ord, value)
         else:
             if so_status == 'Deactivated':
-                data = cursor.execute(f"SELECT qty, open_price FROM orders WHERE trade_pair = '{ord[value]['symbol']}' AND trader_id = '{self.id}' AND status = 'open'").fetchone()
                 close_order = session.get_closed_pnl(
                     category="linear",
                     limit=1,
@@ -147,9 +146,6 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                 
                 requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                     f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
-
-            #FIXME: добавить клавиатуру в два нижних элифа
-            #FIXME: Поработать с антригер и тригер
 
             elif so_status == 'Untriggered':
                 requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
@@ -178,7 +174,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         cursor.close()
         self.func(self.id)
         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                            f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
+                     f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
         
 
 def tracking(ws, tmpstream=None, mode='off'):
