@@ -407,7 +407,7 @@ async def set_api(message: types.Message, state: FSMContext):
         await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_reg)
 
     else:
-        cursor.execute(f"""UPDATE traders SET api_secret = "{api_secret}", api_key = "{api_key}", webstream = 'True'
+        cursor.execute(f"""UPDATE traders SET api_secret = "{api_secret}", api_key = "{api_key}", webstream = 'False'
                            WHERE trader_id = {message.from_user.id}""")
         await bot.send_message(message.chat.id, 'Ваш профиль создан', reply_markup=kb_trader)
     conn.commit()
