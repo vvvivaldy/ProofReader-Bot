@@ -78,7 +78,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                             conn.close()
                     else:
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                     f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
+                                     f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей.')
                         return
                 else:
                     cursor.execute(f"DELETE FROM orders WHERE order_id = '{ord[0]['orderId']}'")
@@ -109,10 +109,10 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
             stop_orders = cursor.execute(f"SELECT tp_order_id, sl_order_id FROM orders WHERE trader_id = '{self.id}' AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()
             tp_status = session.get_order_history(
                 category="linear",
-                orderId = stop_orders[0])['result']['list'][0]['orderStatus']
+                orderId=stop_orders[0])['result']['list'][0]['orderStatus']
             sl_status = session.get_order_history(
                 category="linear",
-                orderId = stop_orders[1])['result']['list'][0]['orderStatus']
+                orderId=stop_orders[1])['result']['list'][0]['orderStatus']
             
             if tp_status == 'Filled' or sl_status == 'Filled':
                 so_status = 'Filled'
