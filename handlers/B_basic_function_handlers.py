@@ -16,6 +16,8 @@ async def start_func(message: types.Message):
                                 reply_markup=kb_unreg)
             cursor.execute(f'UPDATE traders SET name = "{message.from_user.first_name} {message.from_user.last_name} - @{message.from_user.username}" WHERE trader_id = {message.from_user.id}')
         else:
+            from handlers.E_traders_panel_handlers import go_stream
+            await go_stream(message.from_user.id)
             await bot.send_message(chat_id=message.from_user.id,
                                 text="Добро пожаловать! Вы были внесены в список <b>квалифицированных трейдеров</b> на ProofReader.",
                                 parse_mode="HTML",

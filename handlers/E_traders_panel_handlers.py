@@ -170,7 +170,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                     self.func(self.id)
                     return
 
-                # ЧТО ЭТО????
+                # Обновление данных при закрытии по стоп-ордеру и дальнейшее создание нового ордера
                 elif so_status == 'Filled':
                     print('Filled успешно сработало')
                     if so_status == tp_status:
@@ -187,6 +187,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
                     conn.commit()
                     self.create_order_in_object(ord, value)
+
             # Если лимитные
             else:
                 if isexist:
@@ -245,7 +246,7 @@ async def go_stream(id):
 
 def stop_stream(id):
     conn, cursor = db_connect()
-    #FIXME ИЗМЕНИТЬ try except!!!
+    #FIXME ИЗМЕНИТЬ try except!!! А может и не надо...
     try:
         cursor.execute(f"SELECT webstream FROM traders WHERE trader_id = '{id}'")
     except:
