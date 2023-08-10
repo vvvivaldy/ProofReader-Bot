@@ -10,6 +10,7 @@ class TempStream:
     def create_order_in_object(self, ord, value, mode = False):
             conn, cursor = db_connect()
             text = ""
+            is_new = False
             if ord[0]["orderType"] == "Market":
                 if len(ord) == 3:
                     tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
@@ -48,32 +49,56 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                     return
 
             elif ord[0]["orderType"] == "Limit":
+
                 if ord[0]["takeProfit"] != "" and ord[0]["stopLoss"] != "":
-                    text = f"""ЛИМИТНАЯ ЗАЯВКА
-                    
+
+                    tmp = cursor.execute(f'SELECT count(*) FROM orders WHERE trader_id = {self.id} and \
+                                         (status = "open" or status = "new") and trade_pair = "{ord[0]["symbol"]}"').fetchone()[0]
+                    print(tmp)
+                    if tmp == 1:
+                        current_date = datetime.now().date()
+                        print('---')
+                        print(ord)
+                        print('---')
+                        qty = int(cursor.execute(f'SELECT qty FROM orders WHERE trader_id = {self.id} and trade_pair = "{ord[0]["symbol"]}" \
+                                             and (status = "open" or status = "new")').fetchone()[0]) + int(ord[0]['qty'])
+                        cursor.execute(
+                            f"UPDATE orders SET \
+                            order_id = '{ord[0]['orderId']}', qty = '{qty}', date_1 = '{current_date}' \
+                            WHERE trader_id = {self.id} AND trade_pair = '{ord[0]['symbol']}' AND (status = 'open' or status = 'new')")
+
+                        text = f"""ЛИМИТНАЯ ЗАЯВКА
+                        
+Монета: <b>{ord[0]["symbol"]}</b>
+Тип покупки: <b>{ord[0]["side"]}</b>
+Количество (общее кол-во купленных): <b>{qty}</b>
+Цена: <b>{ord[0]["price"]} $</b>
+TakeProfit: <b>{ord[0]["takeProfit"]} $</b>
+StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
+                        
+                        is_new = True
+                        
+                    else:
+                        text = f"""ЛИМИТНАЯ ЗАЯВКА
+                        
 Монета: <b>{ord[0]["symbol"]}</b>
 Тип покупки: <b>{ord[0]["side"]}</b>
 Количество: <b>{ord[0]["qty"]}</b>
 Цена: <b>{ord[0]["price"]} $</b>
 TakeProfit: <b>{ord[0]["takeProfit"]} $</b>
 StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
-                    if not mode:
-                        current_date = datetime.now().date()
-                        current_date = current_date.strftime('%Y-%m-%d')
-                        cursor.execute(
-                            f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                            f" status, open_price, close_price, close_order_id, profit, qty, date_1) VALUES ('{ord[0]['orderId']}', "
-                            f"'', '' ,"
-                            f"'{ord[0]['symbol']}', '{ord[0]['takeProfit']}', '{ord[0]['stopLoss']}', "
-                            f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['qty']}', '{current_date}');")
-                        conn.commit()
-                        conn.close()
-                    else:
-                        current_date = datetime.now().date()
-                        cursor.execute(
-                            f"UPDATE orders SET take_profit = {ord[value]['takeProfit']}, stop_loss = {ord[value]['stopLoss']}, order_id = '{ord[value]['orderId']}', qty = qty + {ord[value]['qty']}, date_1 = '{current_date}' WHERE trader_id = {self.id} AND trade_pair = '{ord[value]['symbol']}' AND status = 'open'")
-                        conn.commit()
-                        conn.close()
+                        if not mode:
+                            current_date = datetime.now().date()
+                            current_date = current_date.strftime('%Y-%m-%d')
+                            cursor.execute(
+                                f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
+                                f" status, open_price, close_price, close_order_id, profit, qty, date_1) VALUES ('{ord[0]['orderId']}', "
+                                f"'', '' ,"
+                                f"'{ord[0]['symbol']}', '{ord[0]['takeProfit']}', '{ord[0]['stopLoss']}', "
+                                f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['qty']}', '{current_date}');")
+                            
+                    conn.commit()
+                    conn.close()
                 else:
                     requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                  f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей.')
@@ -81,11 +106,13 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                          f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+            return is_new
 
     def handle_message(self, message):
         conn, cursor = db_connect()
         api_key, api_secret, webstream = cursor.execute(f'SELECT api_key,api_secret, webstream FROM traders WHERE trader_id = {self.id}').fetchall()[0]
         flag = True
+        is_new = False
         session = HTTP(
             testnet=False,
             api_key=decrypt_api(api_key),
@@ -104,7 +131,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
         # Если нет открытого ордера этой монеты и отслеживание включено
         if not existence_validate_actual and webstream == 1:
-            self.create_order_in_object(ord, value)
+            is_new = self.create_order_in_object(ord, value)
 
         #Если есть открытый ордер этой монеты
         if existence_validate_actual or existence_validate_limit:
@@ -144,16 +171,17 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                         category="linear",
                         limit=1,
                     )
-                    print(close_order)
                     exit_price = close_order["result"]["list"][0]["avgExitPrice"]
                     profit = str(round(float(close_order["result"]["list"][0]["closedPnl"]), 2))
                     order_id = close_order["result"]["list"][0]["orderId"]
+                    flag = False
                     cursor.execute(f'''UPDATE orders SET status = "closed",
                                     profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[value]['symbol']}" AND 
                                     trader_id = "{self.id}" AND status = "open"''')
                     conn.commit()
 
-                    text = f"""Монета: <b>{ord[1]["symbol"]}</b>
+                    text = f"""ПОЗИЦИЯ ЗАКРЫТА\n
+Монета: <b>{ord[1]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b> 
 Количество: <b>{ord[value]["qty"]}</b>
 Цена: <b>{exit_price} $</b>
@@ -172,7 +200,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
                 # Обновление данных при закрытии по стоп-ордеру и дальнейшее создание нового ордера
                 elif so_status == 'Filled':
-                    print('Filled успешно сработало')
+                    print('Стоп-ордер успешно сработал')
                     if so_status == tp_status:
                         who = stop_orders[0]
                     else:
@@ -190,8 +218,8 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
             # Если лимитные
             else:
-                if isexist:
-                    text = f"Ордер на покупку <b>{ord[0]['sybol']}</b> стал активным. Данная монета была также куплена у всех ваших подписчиков."
+                if isexist and not is_new:
+                    text = f"Ордер на покупку <b>{ord[0]['symbol']}</b> стал активным. Данная монета была также куплена у всех ваших подписчиков."
                     tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
                     sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
                     cursor.execute(f'''UPDATE orders SET status = "open", tp_order_id = "{tp['orderId']}", sl_order_id = "{sl['orderId']}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
@@ -239,11 +267,11 @@ async def go_stream(id):
 
     tmp = TempStream(id, stop_stream)
     tracking(id, conn, cursor, 'off')
+    ws.order_stream(callback=tmp.handle_message)
     global stream_websockets
     stream_websockets[f'stream_{id}'] = (ws, tmp)
-    ws.order_stream(callback=tmp.handle_message)
-    
 
+    
 def stop_stream(id):
     conn, cursor = db_connect()
     #FIXME ИЗМЕНИТЬ try except!!! А может и не надо...
@@ -361,6 +389,8 @@ async def trader_help(message: types.Message):
 @dp.message_handler(Text(equals='Вкл отслеживание'))
 async def trader_on(message: types.Message):
     if trader_validate(message.from_user.id):
+        if f'stream_{message.from_user.id}' not in stream_websockets:
+            await go_stream(message.from_user.id)
         conn, cursor = db_connect()
         tracking(message.from_user.id, conn, cursor, mode="on")
         await bot.send_message(chat_id=message.from_user.id,
