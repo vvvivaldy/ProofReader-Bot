@@ -56,15 +56,20 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                         qty = int(cursor.execute(f'SELECT qty FROM orders WHERE trader_id = {self.id} and trade_pair = "{ord[0]["symbol"]}" \
                                              and (status = "open" or status = "new") and type = "Limit"').fetchone()[0]) + int(ord[0]['qty'])
                         
-                        cursor.execute(
-                            f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                            f" status, open_price, close_price, close_order_id, profit, qty, date_1, type) VALUES ('{ord[0]['orderId']}', "
-                            f"'', '' ,"
-                            f"'{ord[0]['symbol']}', '{ord[0]['takeProfit']}', '{ord[0]['stopLoss']}', "
-                            f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['qty']}', '{current_date}', 'Limit');")
+                        try:
+                            cursor.execute(
+                                f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
+                                f" status, open_price, close_price, close_order_id, profit, qty, date_1, type) VALUES ('{ord[0]['orderId']}', "
+                                f"'', '' ,"
+                                f"'{ord[0]['symbol']}', '{ord[0]['takeProfit']}', '{ord[0]['stopLoss']}', "
+                                f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['qty']}', '{current_date}', 'Limit');")
+                        except:
+                            tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
+                            sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
+                            cursor.execute(f'UPDATE orders SET tp_order_id = "{tp["orderId"]}", sl_order_id = "{sl["orderId"]}",\
+                                           status = "open"')
                         conn.commit()
                         cursor.close()
-                        
                         text = f"""ЛИМИТНАЯ ЗАЯВКА
                     
 Монета: <b>{ord[0]["symbol"]}</b>
@@ -125,8 +130,8 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'new'").fetchone()[0])
 
-        # Если нет открытого ордера этой монеты и отслеживание включено
-        if not existence_validate_actual and webstream == 1:
+        # Если нет открытого ордера этой монеты или этот ордер лимитный и есть новая лимитка -> отслеживание включено
+        if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1:
             self.create_order_in_object(ord, value)
 
         #Если есть открытый ордер этой монеты
@@ -135,13 +140,19 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                 cursor.execute(f"UPDATE orders SET status = 'cancel' WHERE order_id = '{ord[0]['orderId']}'")
                 conn.commit()
                 conn.close()
+                text = f'''Вы отменили ордер на покупку 
+
+Монета: <b>{ord[0]["symbol"]}</b>
+ID ордера: <b>{ord[0]["orderId"]}</b>
+Количество: <b>{ord[0]["qty"]}</b>'''
+                
                 requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                             f'/sendMessage?chat_id={self.id}&text=Вы отменили ордер на покупку {ord[0]["symbol"]}.')
+                             f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
                 return
 
             # Есть ли лимитная заявка на эту монету
             isexist = cursor.execute(
-                f"SELECT order_id FROM orders WHERE (status = 'open' or status = 'new') AND type = 'Limit' \
+                f"SELECT order_id FROM orders WHERE status = 'new' AND type = 'Limit' \
                 AND trader_id = '{self.id}' AND trade_pair = '{ord[0]['symbol']}'").fetchall()
 
             # Если есть рыночные ордера
@@ -217,18 +228,20 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
             # Если лимитные
             else:
-                if isexist:
-                    text = f"Ордер на покупку <b>{ord[0]['symbol']}</b> стал активным. Данная монета была также куплена у всех ваших подписчиков."
-                    tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
-                    sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
-                    cursor.execute(f'''UPDATE orders SET status = "open", tp_order_id = "{tp['orderId']}", sl_order_id = "{sl['orderId']}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                                        trader_id = "{self.id}" AND status = "new"''')
-                    conn.commit()
-                    cursor.close()
-                    requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                 f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
-
-                    return
+                for item in isexist:
+                    if item == ord[0]['orderId']:
+                        text = f"Ордер на покупку <b>{ord[0]['symbol']}</b> стал активным. Данная монета была также куплена у всех ваших подписчиков."
+                        tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
+                        sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
+                        if tp != sl != None:
+                            cursor.execute(f'''UPDATE orders SET status = "open", tp_order_id = "{tp['orderId']}", sl_order_id = "{sl['orderId']}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                                                trader_id = "{self.id}" AND status = "new" AND type = "Limit" ''')
+                            
+                        conn.commit()
+                        cursor.close()
+                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                    f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+                        return
 
 
         elif not existence_validate_actual and webstream == 0:
