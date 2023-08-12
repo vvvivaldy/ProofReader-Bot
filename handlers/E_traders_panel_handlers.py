@@ -53,8 +53,8 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                     if tmp != 0:
                         current_date = datetime.now().date()
 
-                        qty = int(cursor.execute(f'SELECT qty FROM orders WHERE trader_id = {self.id} and trade_pair = "{ord[0]["symbol"]}" \
-                                             and (status = "open" or status = "new") and type = "Limit"').fetchone()[0]) + int(ord[0]['qty'])
+                        qty = float(cursor.execute(f'SELECT qty FROM orders WHERE trader_id = {self.id} and trade_pair = "{ord[0]["symbol"]}" \
+                                             and (status = "open" or status = "new") and type = "Limit"').fetchone()[0]) + float(ord[0]['qty'])
                         
                         try:
                             cursor.execute(
