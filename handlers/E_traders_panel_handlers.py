@@ -190,7 +190,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         so_status = 'Filled'
                     elif tp_status == 'Deactivated' or sl_status == 'Deactivated':
                         so_status = 'Deactivated'
-                    elif tp_status == 'Untriggered' or sl_status == 'Untriggered':
+                    elif tp_status == 'Untriggered' and sl_status == 'Untriggered':
                         so_status = 'Untriggered'
 
                 # Если ордер продан
