@@ -266,6 +266,7 @@ async def add_trader(message: types.Message, state: FSMContext):
             cursor = conn.cursor()
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
             cursor.execute(f'UPDATE traders SET status = "block" WHERE trader_id = {trader_id}')
+            cursor.execute(f'UPDATE traders SET api_key = "", api_secret = "" WHERE trader_id = {trader_id}')
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -276,21 +277,14 @@ async def add_trader(message: types.Message, state: FSMContext):
                                    reply_markup=kb_black_list)
             await state.reset_state()
             await state.finish()
-        await state.reset_state()
-        await state.finish()
-    except KeyError as e:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text='Вы недавно добавляли этого пользователя в чс. Повторите попытку для подтверждения.',
-                               reply_markup=kb_black_list)
-        await state.reset_state()
-        await state.finish()
     except sqlite3.IntegrityError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Этот пользователь уже в черном списке.',
                                reply_markup=kb_black_list)
         await state.reset_state()
         await state.finish()
-    
+    await state.reset_state()
+    await state.finish()
 
 
 @dp.message_handler(state=Bl_Id_User.id)
@@ -306,6 +300,7 @@ async def add_user(message: types.Message, state: FSMContext):
             cursor = conn.cursor()
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
             cursor.execute(f'UPDATE users SET status = "block" WHERE user_id = {trader_id}')
+            cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = {trader_id}')
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -316,20 +311,14 @@ async def add_user(message: types.Message, state: FSMContext):
                                    reply_markup=kb_black_list)
             await state.reset_state()
             await state.finish()
-        await state.reset_state()
-        await state.finish()
-    except KeyError as e:
-        await bot.send_message(chat_id=message.from_user.id,
-                               text='Вы недавно добавляли этого пользователя в чс. Повторите попытку для подтверждения.',
-                               reply_markup=kb_black_list)
-        await state.reset_state()
-        await state.finish()
     except sqlite3.IntegrityError as e:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Этот пользователь уже в черном списке.',
                                reply_markup=kb_black_list)
         await state.reset_state()
         await state.finish()
+    await state.reset_state()
+    await state.finish()
 
 
 # Удаление
@@ -338,46 +327,37 @@ async def set_api(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['id'] = message.text
     s = await state.get_data()
+    user_id = s['id']
     try:
-        user_id = s['id']
-        try:
-            conn = sqlite3.connect('db/database.db')
-            cursor = conn.cursor()
-            info = cursor.execute(f"""SELECT * FROM black_list WHERE id={user_id};""").fetchone()
-            stat = cursor.execute(f'SELECT status FROM black_list WHERE id = {user_id}').fetchone()[0]
-            if info is not None:
-                cursor.execute(f"""DELETE FROM black_list WHERE id={user_id};""")
-                if stat == 'user':
-                    cursor.execute(f'UPDATE users SET status = "free" WHERE user_id = {user_id}')
-                    cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = {user_id}')
-                elif stat == 'trader':
-                    cursor.execute(f'UPDATE traders SET status = "active" WHERE trader_id = {user_id}')
-                    cursor.execute(f'UPDATE traders SET api_key = "", api_secret = "" WHERE trader_id = {user_id}')
-                conn.commit()
-                await bot.send_message(chat_id=message.from_user.id,
-                                       text='Пользователь успешно удален из чс.',
-                                       reply_markup=kb_black_list)
-            else:
-                await bot.send_message(chat_id=message.from_user.id,
-                                       text='Пользователь не найден в чс.',
-                                       reply_markup=kb_black_list)
-            await state.reset_state()
-            await state.finish()
-        except ValueError as e:
+        conn = sqlite3.connect('db/database.db')
+        cursor = conn.cursor()
+        info = cursor.execute(f"""SELECT * FROM black_list WHERE id={user_id};""").fetchone()
+        stat = cursor.execute(f'SELECT status FROM black_list WHERE id = {user_id}').fetchone()[0]
+        if info is not None:
+            cursor.execute(f"""DELETE FROM black_list WHERE id={user_id};""")
+            if stat == 'user':
+                cursor.execute(f'UPDATE users SET status = "free" WHERE user_id = {user_id}')
+            elif stat == 'trader':
+                cursor.execute(f'UPDATE traders SET status = "trader" WHERE trader_id = {user_id}')
+            conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
-                                   text='Вы ввели не численное значение',
-                                   reply_markup=kb_black_list)
-            await state.reset_state()
-            await state.finish()
+                                    text='Пользователь успешно удален из чс.',
+                                    reply_markup=kb_black_list)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                    text='Пользователь не найден в чс.',
+                                    reply_markup=kb_black_list)
         await state.reset_state()
         await state.finish()
-    except KeyError as e:
+    except ValueError as e:
         await bot.send_message(chat_id=message.from_user.id,
-                               text='Вы только что добавили этого пользователя. Повторите попытку для подтверждения.',
-                               reply_markup=kb_black_list)
+                                text='Вы ввели не численное значение',
+                                reply_markup=kb_black_list)
         await state.reset_state()
         await state.finish()
-        
+    await state.reset_state()
+    await state.finish()
+    
 
 async def set_user_status(conn,id,status, mode = False):
     cursor = conn.cursor()

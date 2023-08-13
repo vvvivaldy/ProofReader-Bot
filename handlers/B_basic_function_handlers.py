@@ -36,21 +36,17 @@ async def start_func(message: types.Message):
                                         f"на кнопку \"Описание\" \nАвторизуйтесь для начала работы.",
                                 reply_markup=kb_unreg)
     else:
-        try:
-            status = cursor.execute(f"SELECT status FROM users WHERE user_id='{message.from_user.id}'").fetchone()[0]
-        except:
-            status = ""
-        if status != "block":
+        status = cursor.execute(f"SELECT * FROM black_list WHERE id='{message.from_user.id}'").fetchone()
+        if status == None or status[0] != message.from_user.id:
             await bot.send_message(chat_id=message.from_user.id,
                                 text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
                                         f"Подробнее ты можешь узнать нажав  "
                                         f"на кнопку \"Описание\"",
                                 reply_markup=kb_free)
-        # Подключение к бд
-        info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
-        await db_validate(cursor, conn, message, info)
+            # Подключение к бд
+            info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
+            await db_validate(cursor, conn, message, info)
     await message.delete()
-
 
 
 # Хендлер Описания
@@ -127,14 +123,13 @@ async def toptraders(message: types.Message):
                            parse_mode="HTML")
 
 
-
 # Хендлер Покупки подписки
 @dp.message_handler(Text(equals="Оформить подписку"))
 async def buy(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
-    a = cursor.execute(f'SELECT status FROM users WHERE user_id = {message.from_user.id};').fetchone()[0]
-    if a not in ('block', 'trader'):
+    a = cursor.execute(f'SELECT status FROM users WHERE user_id = {message.from_user.id};').fetchone()
+    if a != None and a == 'free':
         if os.getenv('PAYMENTS_TOKEN').split(":")[1] == "TEST":
             await bot.send_photo(message.chat.id,
                                 photo='https://i.postimg.cc/zBynYjZq/photo-2023-06-18-16-59-44.jpg',
@@ -148,7 +143,6 @@ async def buy(message: types.Message):
 @dp.pre_checkout_query_handler(lambda query: True)
 async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
     await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
-
 
 
 # Результат после оплаты

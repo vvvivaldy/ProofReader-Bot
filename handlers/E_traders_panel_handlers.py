@@ -344,8 +344,9 @@ async def keys(message: types.Message):
 @dp.message_handler(Text(equals='Вернуться'))
 async def back(message: types.Message):
     if trader_validate(message.from_user.id):
-        global stream_websockets
-        if f'stream_{message.from_user.id}' in stream_websockets:
+        _, cursor = db_connect()
+        a = cursor.execute(f'SELECT webstream FROM traders WHERE trader_id = "{message.from_user.id}"').fetchone()[0]
+        if a == 1:
             await bot.send_message(chat_id=message.from_user.id,
                                 text="Вы вернулись в меню",
                                 reply_markup=kb_trader2)
