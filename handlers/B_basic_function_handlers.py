@@ -266,3 +266,19 @@ async def instruct_func(message: types.Message):
     await bot.send_video(chat_id=message.from_user.id,
                          video=open("imgs/instruct.mp4", "rb"),
                          caption="Подробная инструкция")
+    
+
+# Рефералки
+@dp.message_handler(Text(equals='Реферальная программа'))
+async def ref(message: types.Message):
+    conn = sqlite3.connect('db/database.db')
+    cursor = conn.cursor()
+    a = cursor.execute(f'SELECT count(*) FROM black_list WHERE id = {message.from_user.id};').fetchone()[0]
+    if a == 0:
+        await bot.send_message(chat_id=message.from_user.id,
+                            text = "Реферальная программа ProofReader",
+                            reply_markup=kb_ref)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text='Программа не доступна для пользователей в черном списке. Если вы хотите вывести ваши средства,\
+                                 то напишите в Тех. Поддержку')

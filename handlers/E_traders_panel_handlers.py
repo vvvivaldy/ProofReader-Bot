@@ -358,7 +358,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                 conn.commit()
                 conn.close()
                 text = f'''Вы отменили ордер на покупку 
-    
+    о
 Монета: <b>{ord[0]["symbol"]}</b>
 ID ордера: <b>{ord[0]["orderId"]}</b>
 Количество: <b>{ord[0]["qty"]}</b>'''
@@ -408,6 +408,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
             cursor.close()
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                          f'/sendMessage?chat_id={self.id}&text=Стоп ордера были успешно обновлены✅')
+
 
 def tracking(id, conn, cursor, mode='off'):
     if mode == 'off':
