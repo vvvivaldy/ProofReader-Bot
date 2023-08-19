@@ -1,11 +1,24 @@
 from handlers.A_head_of_handlers import *
 from callbacks.basic_callbacks import *
+from callbacks.referral_callbacks import *
 
 # Хендлер старта
 @dp.message_handler(commands=["start"])
 async def start_func(message: types.Message):
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
+    conn, cursor = db_connect()
+
+    status = cursor.execute(f"SELECT count(*) FROM black_list WHERE id='{message.from_user.id}'").fetchone()[0]
+    if status == 1:
+        cursor.close()
+        await message.delete()
+        return
+    
+    # Проверка на существования человека в бд в таблице referral; если его нет, то он добавляется
+    get_ref = cursor.execute(f'SELECT count(*) FROM referral WHERE id = {message.from_user.id}').fetchone()[0]
+    if get_ref == 0:
+        cursor.execute(f'INSERT into referral VALUES("{message.from_user.id}","off",0)')
+        conn.commit()
+
     if trader_validate(message.from_user.id):
         traders = cursor.execute('SELECT trader_id, api_key FROM traders;').fetchall()
         idx = [*map(lambda x: x[0], traders)].index(message.from_user.id)
@@ -36,17 +49,16 @@ async def start_func(message: types.Message):
                                         f"на кнопку \"Описание\" \nАвторизуйтесь для начала работы.",
                                 reply_markup=kb_unreg)
     else:
-        status = cursor.execute(f"SELECT * FROM black_list WHERE id='{message.from_user.id}'").fetchone()
-        if status == None or status[0] != message.from_user.id:
-            await bot.send_message(chat_id=message.from_user.id,
-                                text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
-                                        f"Подробнее ты можешь узнать нажав  "
-                                        f"на кнопку \"Описание\"",
-                                reply_markup=kb_free)
-            # Подключение к бд
-            info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
-            await db_validate(cursor, conn, message, info)
+        await bot.send_message(chat_id=message.from_user.id,
+                            text=f"Приветствуем, {message.from_user.username}! В нашем боте вы сможете использовать те же ордера, что и профессиональные трейдеры на Bybit!. "
+                                    f"Подробнее ты можешь узнать нажав  "
+                                    f"на кнопку \"Описание\"",
+                            reply_markup=kb_free)
+        # Подключение к бд
+        info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
+        await db_validate(cursor, conn, message, info)
     await message.delete()
+    cursor.close()
 
 
 # Хендлер Описания
@@ -269,15 +281,38 @@ async def instruct_func(message: types.Message):
     
 
 # Рефералки
-@dp.message_handler(Text(equals='Реферальная программа'))
+@dp.message_handler(Text(equals='Партнёрская программа'))
 async def ref(message: types.Message):
     conn = sqlite3.connect('db/database.db')
     cursor = conn.cursor()
+    # проверка на блэк лист
     a = cursor.execute(f'SELECT count(*) FROM black_list WHERE id = {message.from_user.id};').fetchone()[0]
+    # проверка на сущестование записи в бд
+    b = bool(cursor.execute(f'SELECT count(*) FROM referral WHERE id = "{message.from_user.id}"').fetchone()[0])
+
+    link = "https://Ссылка_на_оплату.xyz"
+    bank = "MyBank=3BillionEURO"
     if a == 0:
-        await bot.send_message(chat_id=message.from_user.id,
-                            text = "Реферальная программа ProofReader",
-                            reply_markup=kb_ref)
+        if b:
+            ispartner = "on" == cursor.execute(f'SELECT status FROM referral WHERE id = "{message.from_user.id}"').fetchone()[0]
+            if ispartner:
+                await bot.send_photo(chat_id=message.from_user.id,
+                                    photo='https://avatars.mds.yandex.net/i?id=409af83d0551ff3d1939e278fb3a0debe6f6883f-9291097-images-thumbs&n=13',
+                                    caption=f'Партнёрская программа ProofReader\n\n\n'
+                                        f'Ваша ссылка для партнёрской программы: \n<b>{link}</b>\n\n'
+                                        f'По ней приведенные вами клиенты будут покупать подписку, а часть стоимости придет на ваш счет: \n<b>{bank}</b>\n\n'
+                                        f'Для клиентов по вашей ссылке скидка <b>{Procent}%</b>',
+                                    reply_markup=kb_ref,
+                                    parse_mode='html')
+            else:
+                await bot.send_photo(chat_id=message.from_user.id,
+                                    photo='https://avatars.mds.yandex.net/i?id=409af83d0551ff3d1939e278fb3a0debe6f6883f-9291097-images-thumbs&n=13',
+                                    caption=f'Вы не являетесь нашим партнёром',
+                                    reply_markup=kb_ref_np,
+                                    parse_mode='html')
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text="Напишите /start и попробуйте снова")
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text='Программа не доступна для пользователей в черном списке. Если вы хотите вывести ваши средства,\

@@ -11,7 +11,7 @@ b2 = KeyboardButton('Наши трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
 b5 = KeyboardButton('Информация')
-b6 = KeyboardButton('Реферальная программа')
+b6 = KeyboardButton('Партнёрская программа')
 kb_free.add(b1, b3).add(b2, b5).add(b4, b6)
 
 # Платная Клавиатура (Незареганный аккаунт)
@@ -161,8 +161,3 @@ percent = KeyboardButton('Процент от депозита')
 fix = KeyboardButton('Фиксированная сумма')
 kb_summ.add(percent).add(fix).add(back_to_settings)
 
-# Рефералки
-kb_ref = ReplyKeyboardMarkup(resize_keyboard=True)
-krf1 = KeyboardButton('Кнопка 1')
-krf2 = KeyboardButton('Кнопка 2')
-kb_ref.add(krf1, krf2)

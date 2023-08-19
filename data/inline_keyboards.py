@@ -82,3 +82,17 @@ kb_order = InlineKeyboardMarkup(row_width=2)
 k1 = InlineKeyboardButton(text='Отправить', callback_data='EpushOrder')
 k2 = InlineKeyboardButton(text='Отмена', callback_data='EcancelOrder')
 kb_order.add(k1).add(k2)
+
+"""РЕФЕРАЛКИ"""
+
+# Еще не партнёр
+kb_ref_np = InlineKeyboardMarkup(row_width=2)
+knp1 = InlineKeyboardButton(text='Стать партнёром', callback_data='Rget_partnership')
+knp2 = InlineKeyboardButton(text='Что это?', callback_data='Rget_partnership_info')
+kb_ref_np.add(knp1,knp2)
+
+# Рефералки когда партнер
+kb_ref = InlineKeyboardMarkup(row_width=2)
+krf1 = InlineKeyboardButton(text='Сменить ссылку',callback_data='Rurl')
+krf2 = InlineKeyboardButton(text='Сменить счет вывода',callback_data='Rbank')
+kb_ref.add(krf1, krf2).add(knp2)
