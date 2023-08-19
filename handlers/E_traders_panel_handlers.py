@@ -53,8 +53,6 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 Тип покупки: <b>{ord[value]["side"]}</b>
 Стоимость ордера: <b>{round(float(ord[value]["qty"]), 2)}</b>
 Триггерная цена: <b>{ord[value]["triggerPrice"]} $</b>"""
-                        print(text)
-                        print('ХФХФХФ')
                         if not mode:
                             current_date = datetime.now().date()
                             current_date = current_date.strftime('%Y-%m-%d')
@@ -78,7 +76,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
 Колиечество монет: <b>{round(float(ord[value]["qty"]), 2)}</b>
-Триггерная цена: <b>{round(float(ord[value]["triggerPrice"]))} $</b>"""
+Триггерная цена: <b>{float(ord[value]["triggerPrice"])} $</b>"""
                         print(ord[0])
                         if not mode:
                             current_date = datetime.now().date()
@@ -183,14 +181,17 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         find_opens_market = bool(cursor.execute(f'SELECT count(*) FROM orders WHERE trader_id = "{self.id}" AND trade_pair = "{ord[0]["symbol"]}" \
                                         AND status = "open" AND type = "Market"').fetchone()[0])
         # Если есть сам ордер
-        if self.value is not None:
+        print(value, self.value, sep='\n')
+        if self.value is not None or self.value == None and ord[0]['category'] == 'spot':
+            if ord[0]['category'] == 'spot':
+                value = 0
             # Если нет открытого ордера этой монеты или этот ордер лимитный и есть новая лимитка -> отслеживание включено
             if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1:
                 self.create_order_in_object(ord, value)
 
             #Если есть открытый ордер этой монеты
-            if existence_validate_actual or existence_validate_limit:
-                if ord[0]["orderType"] == "Limit" and ord[0]["orderStatus"] == "Cancelled":
+            if existence_validate_actual or existence_validate_limit or ord[0]['category'] == 'spot':
+                if ord[0]["orderType"] == "Limit" and ord[0]["orderStatus"] == "Cancelled" or ord[0]["orderType"] == "Market" and ord[0]["orderStatus"] == "Cancelled":
                     cursor.execute(f"UPDATE orders SET status = 'cancel' WHERE order_id = '{ord[0]['orderId']}'")
                     conn.commit()
                     conn.close()
@@ -215,7 +216,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                     stop_orders = cursor.execute(f"SELECT tp_order_id, sl_order_id FROM orders WHERE trader_id = '{self.id}' \
                                                  AND trade_pair = '{ord[0]['symbol']}' AND status = 'open' AND type = 'Market'").fetchone()
 
-                    if len(ord) == 2: # условие для определения и фильтрации не нужных исходящих ордеров.
+                    if len(ord) == 2 or ord[0]['category'] == 'spot' and len(ord) == 1: # условие для определения и фильтрации не нужных исходящих ордеров.
                         # Было принято такое решение т.к. закрытие по стопам определяется не путем принятия исходящих ордеров, а путем получение их статуса по их id.
                         # При срабатывании стопа, мы получаем сначала один ордер со статусом triggered, на котором в большинстве случаев стоп ордера уже заполнились,
                         # Затем, мы получим два ордера, это будут стоп лосс и тейк профит, проверка идет заново и это вызывает посторный вызов ф-ций, которые не должны
@@ -226,10 +227,10 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         skip_condition = True
 
                     tp_status = session.get_order_history(
-                        category="spot",
+                        category="linear",
                         orderId=stop_orders[0])['result']['list'][0]['orderStatus']
                     sl_status = session.get_order_history(
-                        category="spot",
+                        category="linear",
                         orderId=stop_orders[1])['result']['list'][0]['orderStatus']
 
                     # Выдача статусов
@@ -301,6 +302,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         price = next((n['triggerPrice'] for n in ord if "triggerPrice" in n and n["triggerPrice"] != "0"), None)
                         data = cursor.execute(f"SELECT qty, open_price FROM orders WHERE trade_pair = '{ord[0]['symbol']}' AND trader_id = '{self.id}' \
                                               AND status = 'open' AND type = 'Market' ").fetchone()
+                        print(data)
                         profit = round(float(price) * float(data[0]) - float(data[0]) * float(data[1]), 5)
                         cursor.execute(f'''UPDATE orders SET status = "closed",
                                         profit = "{profit}", close_price = "{price}", close_order_id = "{who}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
@@ -344,56 +346,9 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
             if flag:
                 requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                              f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
+                return
                 
-        elif self.value == None and ord[0]['category'] == 'spot':
-            value = 0
-            existence_validate_actual = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
-                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'open' AND tp_order_id != '' AND sl_order_id != ''").fetchone()[0])
-            existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
-                                                       AND trade_pair = '{ord[0]['symbol']}' AND status = 'new'").fetchone()[0])
-            if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1:
-                self.create_order_in_object(ord, value)
-            if ord[0]["orderType"] == "Limit" and ord[0]["orderStatus"] == "Cancelled":
-                cursor.execute(f"UPDATE orders SET status = 'cancel' WHERE order_id = '{ord[0]['orderId']}'")
-                conn.commit()
-                conn.close()
-                text = f'''Вы отменили ордер на покупку 
-    
-Монета: <b>{ord[0]["symbol"]}</b>
-ID ордера: <b>{ord[0]["orderId"]}</b>
-Количество: <b>{ord[0]["qty"]}</b>'''
 
-                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                 f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
-                return
-
-            if ord[0]["orderType"] == "Market" and ord[0]["orderStatus"] == "Cancelled":
-                cursor.execute(f"UPDATE orders SET status = 'cancel' WHERE order_id = '{ord[0]['orderId']}'")
-                conn.commit()
-                conn.close()
-                text = f'''Вы отменили ордер на покупку 
-    
-Монета: <b>{ord[0]["symbol"]}</b>
-ID ордера: <b>{ord[0]["orderId"]}</b>
-Количество: <b>{ord[0]["qty"]}</b>'''
-
-                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                 f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
-                return
-
-
-            elif not existence_validate_actual and webstream == 0:
-                flag = False
-                if ord[0]["orderStatus"] != "Cancelled" and len(ord) != 2:
-                    requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                 f'/sendMessage?chat_id={self.id}&text=Ордер не был отправлен вашим подписчикам')
-
-            cursor.close()
-            self.func(self.id)
-
-            if flag:
-                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                             f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
             
 
         # Если только тп и/или сл
@@ -573,5 +528,3 @@ async def trader_off(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
-        
-        
