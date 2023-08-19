@@ -116,7 +116,8 @@ adb3 = KeyboardButton('Черный список')
 adb4 = KeyboardButton('Вывод данных о клиенте')
 adb5 = KeyboardButton('Выдать статус')
 adb6 = KeyboardButton('Перешифровка')
-kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb6)
+adb7 = KeyboardButton('Изменить % (ref)')
+kb_admin.add(adb1, adb2, adb7).add(adb3, adb4).add(adb5, adb6)
 
 # Клавиатура черного списка
 kb_black_list = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -160,4 +161,3 @@ kb_summ = ReplyKeyboardMarkup(resize_keyboard=True)
 percent = KeyboardButton('Процент от депозита')
 fix = KeyboardButton('Фиксированная сумма')
 kb_summ.add(percent).add(fix).add(back_to_settings)
-

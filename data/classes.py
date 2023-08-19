@@ -68,3 +68,7 @@ class Set_Percent(StatesGroup):
 
 class Set_Dollars(StatesGroup):
     dollars = State()
+
+
+class Set_Procent(StatesGroup):
+    pr = State()

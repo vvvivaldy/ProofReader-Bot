@@ -13,6 +13,7 @@ async def admin_check(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
         
+
 @dp.message_handler(Text(equals='Статистика бота'))
 async def statistics_for_admin(message: types.Message):
     if await admin_validate(message):
@@ -22,7 +23,6 @@ async def statistics_for_admin(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.")
-
 
 
 @dp.message_handler(Text(equals='Цены'))
@@ -46,6 +46,7 @@ async def set_price(message: types.Message):
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.") 
+
 
 # Черный список
 @dp.message_handler(Text(equals='Черный список'))
@@ -246,5 +247,38 @@ async def SetUserSubStatus(message: types.Message, state: FSMContext):
         await bot.send_message(chat_id=message.from_user.id,
                                 text='Введены неккоректные данные или такого юзера не существует в бд',
                                 reply_markup=kb_admin)
+    await state.reset_state()
+    await state.finish()
+
+
+@dp.message_handler(Text(equals='Изменить % (ref)'))
+async def pr_ref(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Введите число-процент скидки юзеров с партнерки (последний символ - %)",
+                               reply_markup=kb_admin) 
+        await Set_Procent.pr.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.") 
+        
+
+@dp.message_handler(state=Set_Procent.pr)
+async def SetUserSubStatus(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['pr'] = message.text
+    s = await state.get_data()
+    s = s['pr']
+    if s[-1]=='%' and s[:-1].isdigit() and 1<=float(s[:-1])<=99:
+        dotenv.set_key('.env','PROCENT',s[:-1])
+        os.environ['Procent'] = s[:-1]
+        print(os.environ["Procent"])
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Успешно изменен процент",
+                               reply_markup=kb_admin) 
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Неверное значение",
+                               reply_markup=kb_admin) 
     await state.reset_state()
     await state.finish()

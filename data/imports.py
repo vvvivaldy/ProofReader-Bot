@@ -14,7 +14,7 @@ from data.inline_keyboards import ikas, paykb, inl_kb_pr, inl_kb_status, ikk, ik
      ikb_quantity, ikb_trader_stat, kb_order, kb_ref, kb_ref_np
 from data.classes import Auth, Bl_Id_Trader, Bl_Id_User, UserDel, TraderStatus, UserStatus, SetUserSubscriptionStatus,\
      EditApi, EditApiTrader, Key_Duration, Activation_Quantity, Key_Delete, TraderKey, Leverage, Set_Leverage,\
-     Set_Percent, Set_Dollars
+     Set_Percent, Set_Dollars, Set_Procent
 
 
 import logging
