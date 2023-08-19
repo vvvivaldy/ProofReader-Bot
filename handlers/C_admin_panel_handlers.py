@@ -2,7 +2,6 @@ from handlers.B_basic_function_handlers import *
 from callbacks.admin_callbacks import *
 
 
-
 @dp.message_handler(commands=['ADMINPANEL'])
 async def admin_check(message: types.Message):
     if await admin_validate(message):
