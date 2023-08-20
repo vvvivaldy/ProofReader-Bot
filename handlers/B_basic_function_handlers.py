@@ -16,7 +16,7 @@ async def start_func(message: types.Message):
     # Проверка на существования человека в бд в таблице referral; если его нет, то он добавляется
     get_ref = cursor.execute(f'SELECT count(*) FROM referral WHERE id = {message.from_user.id}').fetchone()[0]
     if get_ref == 0:
-        cursor.execute(f'INSERT into referral VALUES("{message.from_user.id}","off",0)')
+        cursor.execute(f'INSERT into referral VALUES("{message.from_user.id}","off",0,{os.environ["Sale"]},{os.environ["Salary"]})')
         conn.commit()
 
     if trader_validate(message.from_user.id):
@@ -283,28 +283,30 @@ async def instruct_func(message: types.Message):
 # Рефералки
 @dp.message_handler(Text(equals='Партнёрская программа'))
 async def ref(message: types.Message):
-    conn = sqlite3.connect('db/database.db')
-    cursor = conn.cursor()
+    conn, cursor = db_connect()
     # проверка на блэк лист
     a = cursor.execute(f'SELECT count(*) FROM black_list WHERE id = {message.from_user.id};').fetchone()[0]
-    # проверка на сущестование записи в бд
-    b = bool(cursor.execute(f'SELECT count(*) FROM referral WHERE id = "{message.from_user.id}"').fetchone()[0])
-
-    link = "https://Ссылка_на_оплату.xyz"
-    bank = "MyBank=3BillionEURO"
     if a == 0:
+        # проверка на сущестование записи в бд
+        b = bool(cursor.execute(f'SELECT count(*) FROM referral WHERE id = "{message.from_user.id}"').fetchone()[0])
+
         if b:
+            salary = int(cursor.execute(f'SELECT salary FROM referral WHERE id = {message.from_user.id}').fetchone()[0])
+            sale = int(cursor.execute(f'SELECT sale FROM referral WHERE id = {message.from_user.id}').fetchone()[0])
+            link = "https://Ссылка_на_оплату.xyz"
+            bank = "MyBank=3BillionEURO"
             ispartner = "on" == cursor.execute(f'SELECT status FROM referral WHERE id = "{message.from_user.id}"').fetchone()[0]
+
             if ispartner:
                 await bot.send_photo(chat_id=message.from_user.id,
                                     photo='https://avatars.mds.yandex.net/i?id=409af83d0551ff3d1939e278fb3a0debe6f6883f-9291097-images-thumbs&n=13',
                                     caption=f'Партнёрская программа ProofReader\n\n\n'
                                         f'Ваша ссылка для партнёрской программы: \n<b>{link}</b>\n\n'
                                         f'По ней приведенные вами клиенты будут покупать подписку, а часть стоимости придет на ваш счет: \n<b>{bank}</b>\n\n'
-                                        f'Для клиентов по вашей ссылке скидка <b>{os.environ["Procent"]}%</b>',
+                                        f'Ваша прибыль с каждой покупки (скидка не влияет на прибыль) = <b>{salary}%</b>\n\n'
+                                        f'Для клиентов по вашей ссылке скидка <b>{sale}%</b>',
                                     reply_markup=kb_ref,
                                     parse_mode='html')
-                print(os.environ["Procent"])
             else:
                 await bot.send_photo(chat_id=message.from_user.id,
                                     photo='https://avatars.mds.yandex.net/i?id=409af83d0551ff3d1939e278fb3a0debe6f6883f-9291097-images-thumbs&n=13',
@@ -318,3 +320,4 @@ async def ref(message: types.Message):
         await bot.send_message(chat_id=message.from_user.id,
                                text='Программа не доступна для пользователей в черном списке. Если вы хотите вывести ваши средства,\
                                  то напишите в Тех. Поддержку')
+    cursor.close()

@@ -108,6 +108,12 @@ kb_instruct2 = ReplyKeyboardMarkup(resize_keyboard=True)
 basd = KeyboardButton("Назад в меню информации")
 kb_instruct2.add(b_ins1).add(b_ins2).add(basd)
 
+# Клава партнерки АДМИН
+kb_admin_ref = ReplyKeyboardMarkup(resize_keyboard=True)
+kar1 = KeyboardButton('Sale %')
+kar2 = KeyboardButton('Salary %')
+kb_admin_ref.add(kar1,kar2)
+
 # Клавиатура админ панели
 kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)
 adb1 = KeyboardButton('Статистика бота')
@@ -116,7 +122,7 @@ adb3 = KeyboardButton('Черный список')
 adb4 = KeyboardButton('Вывод данных о клиенте')
 adb5 = KeyboardButton('Выдать статус')
 adb6 = KeyboardButton('Перешифровка')
-adb7 = KeyboardButton('Изменить % (ref)')
+adb7 = KeyboardButton('Partnership')
 kb_admin.add(adb1, adb2, adb7).add(adb3, adb4).add(adb5, adb6)
 
 # Клавиатура черного списка

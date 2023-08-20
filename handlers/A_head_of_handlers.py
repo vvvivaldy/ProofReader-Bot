@@ -6,7 +6,6 @@ bot = Bot(os.getenv('TG_TOKEN'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 admin_ids = (os.getenv('NIKITA_ID'), os.getenv('MISHA_ID'), os.getenv('ROMA_ID'))
 stream_websockets = {}
-Procent = os.getenv('PROCENT')
 
 
 # проверка на нужнуб клавиатуру трейдера

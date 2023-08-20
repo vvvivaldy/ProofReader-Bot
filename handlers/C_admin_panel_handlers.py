@@ -119,8 +119,12 @@ async def check_bl(message: types.Message):
 
 @dp.message_handler(Text(equals='Вывод данных о клиенте'))
 async def client_status(message: types.Message):
-    await message.answer(text='Кого выбираем?',
-                         reply_markup=ikk)
+    if await admin_validate(message):
+        await message.answer(text='Кого выбираем?',
+                            reply_markup=ikk)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 @dp.message_handler(Text(equals='Выдать статус'))
@@ -136,57 +140,61 @@ async def set_status(message: types.Message):
 
 @dp.message_handler(Text(equals='Перешифровка'))
 async def re_encrypt_api(message: types.Message):
-    conn = sqlite3.connect('db/database.db')
-    cur = conn.cursor()
-    data_user = cur.execute('SELECT user_id, api_key, api_secret FROM users WHERE api_key != "";').fetchall()
-    data_trader = cur.execute('SELECT trader_id, api_key, api_secret FROM traders WHERE api_key != "";').fetchall()
-    tmp_key = os.getenv('CIPHER_KEY')
-    if len(data_user) > 0:
-        try:
-            decrypt_api(data_user[0][1],tmp_key)
-        except InvalidToken:
-            await bot.send_message(chat_id=message.from_user.id,
-                                text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе юзеров')
-            return
-        tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
-        dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
-        tmp = None
-        for user in data_user:
-            cur.execute(f'''UPDATE users SET api_key = "{encrypt_api(decrypt_api(user[1],tmp_key))}",
-                                            api_secret = "{encrypt_api(decrypt_api(user[2],tmp_key))}" 
-                                            WHERE user_id = {user[0]}''')
-            conn.commit()
-
-        await bot.send_message(chat_id=message.from_user.id,
-                                text='Все api юзеров перекодированы')
-    else:
-        await bot.send_message(chat_id=message.from_user.id,
-                         text='База данных клиентов пуста')
-    
-    if len(data_trader) > 0:
-        try:
-            decrypt_api(data_trader[0][1],tmp_key)
-        except InvalidToken:
-            await bot.send_message(chat_id=message.from_user.id,
-                                text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе трейдеров')
-            return
-        
-        if len(data_user) == 0:
+    if await admin_validate(message):
+        conn = sqlite3.connect('db/database.db')
+        cur = conn.cursor()
+        data_user = cur.execute('SELECT user_id, api_key, api_secret FROM users WHERE api_key != "";').fetchall()
+        data_trader = cur.execute('SELECT trader_id, api_key, api_secret FROM traders WHERE api_key != "";').fetchall()
+        tmp_key = os.getenv('CIPHER_KEY')
+        if len(data_user) > 0:
+            try:
+                decrypt_api(data_user[0][1],tmp_key)
+            except InvalidToken:
+                await bot.send_message(chat_id=message.from_user.id,
+                                    text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе юзеров')
+                return
             tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
             dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
             tmp = None
+            for user in data_user:
+                cur.execute(f'''UPDATE users SET api_key = "{encrypt_api(decrypt_api(user[1],tmp_key))}",
+                                                api_secret = "{encrypt_api(decrypt_api(user[2],tmp_key))}" 
+                                                WHERE user_id = {user[0]}''')
+                conn.commit()
 
-        for trader in data_trader:
-            cur.execute(f'''UPDATE traders SET api_key = "{encrypt_api(decrypt_api(trader[1],tmp_key))}",
-                                            api_secret = "{encrypt_api(decrypt_api(trader[2],tmp_key))}" 
-                                            WHERE trader_id = {trader[0]}''')
-            conn.commit()
+            await bot.send_message(chat_id=message.from_user.id,
+                                    text='Все api юзеров перекодированы')
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                            text='База данных клиентов пуста')
+        
+        if len(data_trader) > 0:
+            try:
+                decrypt_api(data_trader[0][1],tmp_key)
+            except InvalidToken:
+                await bot.send_message(chat_id=message.from_user.id,
+                                    text=f'Произошла ошибка InvalidToken (какие-то api расшифровываются по старому ключу) в базе трейдеров')
+                return
+            
+            if len(data_user) == 0:
+                tmp = os.environ['CIPHER_KEY'] = str(Fernet.generate_key())[2:-2]
+                dotenv.set_key('.env','CIPHER_KEY',tmp,encoding='utf-8')
+                tmp = None
 
-        await bot.send_message(chat_id=message.from_user.id,
-                                text='Все api трейдеров перекодированы')
+            for trader in data_trader:
+                cur.execute(f'''UPDATE traders SET api_key = "{encrypt_api(decrypt_api(trader[1],tmp_key))}",
+                                                api_secret = "{encrypt_api(decrypt_api(trader[2],tmp_key))}" 
+                                                WHERE trader_id = {trader[0]}''')
+                conn.commit()
+
+            await bot.send_message(chat_id=message.from_user.id,
+                                    text='Все api трейдеров перекодированы')
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                            text='База данных трейдеров пуста')
     else:
         await bot.send_message(chat_id=message.from_user.id,
-                         text='База данных трейдеров пуста')
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.")
 
 
 @dp.message_handler(lambda m: all([i.isdigit() for i in m.text[1:].split()]) and m.text[0] == '!')
@@ -250,28 +258,85 @@ async def SetUserSubStatus(message: types.Message, state: FSMContext):
     await state.finish()
 
 
-@dp.message_handler(Text(equals='Изменить % (ref)'))
-async def pr_ref(message: types.Message):
+@dp.message_handler(Text(equals='Partnership'))
+async def partnership(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_photo(chat_id=message.from_user.id,
+                            photo='https://avatars.mds.yandex.net/i?id=9e3c1e3205545e1db951fd8869a1a77265f1aed9-9203527-images-thumbs&n=13',
+                               caption="Настройка партнерки",
+                               reply_markup=kb_admin_ref) 
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.") 
+
+
+@dp.message_handler(Text(equals='Sale %'))
+async def sale_ref(message: types.Message):
     if await admin_validate(message):
         await bot.send_message(chat_id=message.from_user.id,
                                text="Введите число-процент скидки юзеров с партнерки (последний символ - %)",
                                reply_markup=kb_admin) 
-        await Set_Procent.pr.set()
+        await Set_Sale.pr.set()
     else:
         await bot.send_message(chat_id=message.from_user.id,
                                text="Мы не предусмотрели данный запрос. Повторите попытку.") 
         
 
-@dp.message_handler(state=Set_Procent.pr)
-async def SetUserSubStatus(message: types.Message, state: FSMContext):
+@dp.message_handler(state=Set_Sale.pr)
+async def set_sale(message: types.Message, state: FSMContext):
     async with state.proxy() as proxy:
         proxy['pr'] = message.text
     s = await state.get_data()
     s = s['pr']
     if s[-1]=='%' and s[:-1].isdigit() and 1<=float(s[:-1])<=99:
-        dotenv.set_key('.env','PROCENT',s[:-1])
-        os.environ['Procent'] = s[:-1]
-        print(os.environ["Procent"])
+        tmp = os.environ['Sale']
+        dotenv.set_key('.env','Sale',s[:-1])
+        os.environ['Sale'] = s[:-1]
+
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE referral SET sale = {os.environ["Sale"]} WHERE sale == {tmp}')
+        conn.commit()
+        cursor.close()
+
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Успешно изменен процент",
+                               reply_markup=kb_admin) 
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Неверное значение",
+                               reply_markup=kb_admin) 
+    await state.reset_state()
+    await state.finish()
+
+
+@dp.message_handler(Text(equals='Salary %'))
+async def salary_ref(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Введите число-процент заработка партнера (последний символ - %)",
+                               reply_markup=kb_admin) 
+        await Set_Salary.proc.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.") 
+        
+
+@dp.message_handler(state=Set_Salary.proc)
+async def set_salary(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['proc'] = message.text
+    s = await state.get_data()
+    s = s['proc']
+    if s[-1]=='%' and s[:-1].isdigit() and 1<=float(s[:-1])<=99:
+        tmp = os.environ['Salary']
+        dotenv.set_key('.env','Salary',s[:-1])
+        os.environ['Salary'] = s[:-1]
+
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE referral SET salary = {os.environ["Salary"]} WHERE salary == {tmp}')
+        conn.commit()
+        cursor.close()
+
         await bot.send_message(chat_id=message.from_user.id,
                                text="Успешно изменен процент",
                                reply_markup=kb_admin) 
