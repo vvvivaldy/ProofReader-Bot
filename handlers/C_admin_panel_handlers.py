@@ -346,3 +346,41 @@ async def set_salary(message: types.Message, state: FSMContext):
                                reply_markup=kb_admin) 
     await state.reset_state()
     await state.finish()
+
+
+@dp.message_handler(Text(equals='Персональное изм. %'))
+async def personal_procent(message: types.Message):
+    if await admin_validate(message):
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Введите id кому вы хотите изменить % (ref): ",
+                               reply_markup=kb_admin) 
+        await Personal_Id.id.set()
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Мы не предусмотрели данный запрос. Повторите попытку.") 
+        
+
+@dp.message_handler(state=Personal_Id.id)
+async def set_salary(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['id'] = message.text
+    s = await state.get_data()
+    s = s['id']
+    if s.isdigit():
+        conn, cursor = db_connect()
+        check_in_db = cursor.execute(f'SELECT count(*) FROM referral WHERE id = {s}').fetchone()[0]
+        if check_in_db:
+            sale, salary = cursor.execute(f'SELECT sale, salary FROM referral WHERE id = {s}').fetchone()
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text=
+                                   f'Значения по умолчанию: Sale={os.environ["Sale"]}%, Salary={os.environ["Salary"]}%\n'
+                                   f'Установленные значения партнёра: Sale={sale}, Salary={salary}\n\n'
+                                   'Что будем менять?',
+                                   reply_markup=inl_ref_pocent)
+            await state.update_data(id=s)
+            await state.reset_state(with_data=False)
+        else:
+            await bot.send_message(chat_id=message.from_user.id,
+                                   text='Пользователь не является партнёром')
+            await state.finish()
+            await state.reset_state()

@@ -177,6 +177,16 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                 except:
                     print('Что-то с кэшом или бывший юзер не удалился из бд')
 
+        case 'sale':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text='Введите число-процент скидки юзеров с партнерки (последний символ - %)')
+            await Set_Sale_Personal.pr.set()
+            
+        case 'salary':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text='Введите число-процент заработка партнера (последний символ - %)')
+            await Set_Salary_Personal.proc.set()
+
 
 @dp.message_handler(state=UserStatus.status)
 async def check_trader_status(message: types.Message, state: FSMContext):
@@ -398,3 +408,48 @@ status, name, trader_subs) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?)""", (dat
         conn.commit()
         cursor.close()
     return True
+
+
+@dp.message_handler(state=Set_Sale_Personal.pr)
+async def set_sale_personal(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['pr'] = message.text
+    s = await state.get_data()
+    pr = s['pr']
+    id = s['id']
+    print(id)
+    if pr[-1]=='%' and pr[:-1].isdigit() and 1<=float(pr[:-1])<=99:
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE referral SET sale = {pr[:-1]} WHERE id = {id}')
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'Sale для пользователя {id} изменён успешно! Текущий = {pr}',
+                               reply_markup=kb_admin)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Неверное значение",
+                               reply_markup=kb_admin) 
+    await state.reset_state(with_data=False)
+
+
+@dp.message_handler(state=Set_Salary_Personal.proc)
+async def set_sale_personal(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['proc'] = message.text
+    s = await state.get_data()
+    pr = s['proc']
+    id = s['id']
+    if pr[-1]=='%' and pr[:-1].isdigit() and 1<=float(pr[:-1])<=99:
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE referral SET salary = {pr[:-1]} WHERE id = {id}')
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'Salary для пользователя {id} изменён успешно! Текущий = {pr}',
+                               reply_markup=kb_admin)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Неверное значение",
+                               reply_markup=kb_admin) 
+    await state.reset_state(with_data=False)

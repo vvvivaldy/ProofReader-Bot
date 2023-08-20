@@ -59,10 +59,12 @@ ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='CTrader')
 ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='CUser')
 inl_kb_status.add(ikbtn1, ikbtn2)
 
-ikb_quantity = InlineKeyboardMarkup(row_width=2)
-infinity = InlineKeyboardButton(text='Бесконечное', callback_data='Einfinity')
-personal = InlineKeyboardButton(text='Персональное', callback_data='Epersonal')
-ikb_quantity.add(infinity).add(personal)
+inl_ref_pocent = InlineKeyboardMarkup(row_width=2)
+rp1 = InlineKeyboardButton(text='Sale %', callback_data='Csale')
+rp2 = InlineKeyboardButton(text='Salary %', callback_data='Csalary')
+inl_ref_pocent.add(rp1, rp2)
+
+"""ДЛЯ ТРЕЙДЕРА"""
 
 # Трейдер статистика
 ikb_trader_stat = InlineKeyboardMarkup(row_width=1)
@@ -76,6 +78,11 @@ kb_contract = InlineKeyboardMarkup(resize_keyboard=True)
 conb1 = InlineKeyboardButton("Линейный", callback_data='Dlinear')
 conb2 = InlineKeyboardButton("Обратный", callback_data='Dinverse')
 kb_contract.add(conb1).add(conb2)
+
+ikb_quantity = InlineKeyboardMarkup(row_width=2)
+infinity = InlineKeyboardButton(text='Бесконечное', callback_data='Einfinity')
+personal = InlineKeyboardButton(text='Персональное', callback_data='Epersonal')
+ikb_quantity.add(infinity).add(personal)
 
 
 kb_order = InlineKeyboardMarkup(row_width=2)

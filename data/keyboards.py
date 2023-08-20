@@ -112,7 +112,8 @@ kb_instruct2.add(b_ins1).add(b_ins2).add(basd)
 kb_admin_ref = ReplyKeyboardMarkup(resize_keyboard=True)
 kar1 = KeyboardButton('Sale %')
 kar2 = KeyboardButton('Salary %')
-kb_admin_ref.add(kar1,kar2)
+kar3 = KeyboardButton('Персональное изм. %')
+kb_admin_ref.add(kar1,kar2).add(kar3)
 
 # Клавиатура админ панели
 kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)
