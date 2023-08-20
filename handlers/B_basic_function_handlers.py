@@ -57,6 +57,16 @@ async def start_func(message: types.Message):
         # Подключение к бд
         info = cursor.execute('SELECT * FROM users WHERE user_id=?;', (message.from_user.id, )).fetchone()
         await db_validate(cursor, conn, message, info)
+
+        # Проверка на приглашение по рефералке
+        partner = message.text.replace('/start','').strip()
+        find_partner = cursor.execute(f'SELECT count(*) FROM referral WHERE id = {partner} AND status = "on"').fetchone()[0]
+
+        if partner != '' and partner.isdigit() and find_partner:
+            cursor.execute(f'INSERT INTO ref_clients VALUES ({partner},{message.from_user.id},"free","")')
+            cursor.execute(f'UPDATE referral SET count_clinents = count_clinents + 1 WHERE id = {partner}')
+            conn.commit()
+
     await message.delete()
     cursor.close()
 
@@ -214,6 +224,9 @@ async def successfull_payment(message: types.Message):
                        subscribe_finish = "{date_fininsh}", 
                        [transaction] = "{tranzaktion}" 
                        where user_id = {message.from_user.id};""")
+    edit_status_ref(message.from_user.id, 'paid', cursor)
+    time = datetime.now()
+    cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = {message.from_user.id}')
 
     conn.commit()
     cursor.close()

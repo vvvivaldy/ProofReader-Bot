@@ -120,8 +120,7 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             with open('cache/cache.txt','r',encoding='utf-8')as data:
                 try:
                     data = data.readlines()[0]
-                    conn = sqlite3.connect('db/database.db')
-                    cursor = conn.cursor()
+                    conn, cursor = db_connect()
                     try:
                         if len(cursor.execute(f'SELECT status FROM traders WHERE trader_id = {data}').fetchone()) == 1: mode = True
                         else: mode = False
@@ -138,14 +137,14 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                         reply_markup=ikst)
-                except:
+                except Exception as e:
+                    print(e)
                     print('Что-то с кэшом')
         
         case 'set_paid':
             with open('cache/cache.txt','r',encoding='utf-8')as data:
                 try:
-                    conn = sqlite3.connect('db/database.db')
-                    cursor = conn.cursor()
+                    conn, cursor = db_connect()
                     data = data.readlines()[0]
                     try:
                         if len(cursor.execute(f'SELECT status FROM traders WHERE trader_id = {data}').fetchone()) == 1: mode = True
@@ -159,14 +158,14 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                         reply_markup=ikst)
-                except:
+                except Exception as e:
+                    print(e)
                     print('Что-то с кэшом')
 
         case 'set_trader':
             with open('cache/cache.txt', 'r', encoding='utf-8') as data:
                 try:
                     data = data.readlines()[0]
-                    conn = sqlite3.connect('db/database.db')
                     res = await set_trader_status(data, 'trader')
                     if res:
                         await callback.message.edit_text(text=f'Статус юзера {data}: trader',
@@ -174,7 +173,8 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                          reply_markup=ikst)
-                except:
+                except Exception as e:
+                    print(e)
                     print('Что-то с кэшом или бывший юзер не удалился из бд')
 
         case 'sale':
@@ -373,7 +373,9 @@ async def set_user_status(conn,id,status, mode = False):
     cursor = conn.cursor()
     try:
         if not mode:
-            cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
+            cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = "{id}"')
+            if status == 'free':
+                edit_status_ref(id, status, cursor)
         else:
             api = cursor.execute(f'SELECT api_key, api_secret FROM traders WHERE trader_id = {id}').fetchone()
             if api[0] == None:
@@ -384,6 +386,9 @@ async def set_user_status(conn,id,status, mode = False):
         print(e)
         return False
     if status == 'paid' or mode:
+        edit_status_ref(id, status, cursor)
+        time = datetime.now()
+        cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = {id}')
         conn.commit()
         conn.close()
     return True
@@ -405,6 +410,7 @@ status, name, trader_subs) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?)""", (dat
         print('новый трейдр не удалился из таблицы юзеров')
         return False
     if status == 'trader':
+        edit_status_ref(id, status, cursor)
         conn.commit()
         cursor.close()
     return True

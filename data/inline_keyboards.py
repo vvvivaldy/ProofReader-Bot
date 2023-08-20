@@ -100,6 +100,5 @@ kb_ref_np.add(knp1,knp2)
 
 # Рефералки когда партнер
 kb_ref = InlineKeyboardMarkup(row_width=2)
-krf1 = InlineKeyboardButton(text='Сменить ссылку',callback_data='Rurl')
 krf2 = InlineKeyboardButton(text='Сменить счет вывода',callback_data='Rbank')
-kb_ref.add(krf1, krf2).add(knp2)
+kb_ref.add(krf2,knp2)

@@ -30,10 +30,6 @@ async def referral_callback(callback: types.CallbackQuery):
         await bot.send_message(chat_id = callback.from_user.id,
                                text=REFERRAL)
         
-    elif callback.data == "url":
-        await bot.send_message(chat_id = callback.from_user.id,
-                               text="Тут будет ф-ция смены url")
-        
     elif callback.data == 'bank':
         await bot.send_message(chat_id = callback.from_user.id,
                                text="Тут будет ф-ция смены счёта")
