@@ -15,10 +15,11 @@ async def referral_callback(callback: types.CallbackQuery):
         
         salary = int(cursor.execute(f'SELECT salary FROM referral WHERE id = {callback.from_user.id}').fetchone()[0])
         sale = int(cursor.execute(f'SELECT sale FROM referral WHERE id = {callback.from_user.id}').fetchone()[0])
+        link = cursor.execute(f'SELECT link FROM referral WHERE id = {callback.from_user.id}').fetchone()[0]
         await bot.send_photo(chat_id=callback.from_user.id,
                                     photo='https://avatars.mds.yandex.net/i?id=409af83d0551ff3d1939e278fb3a0debe6f6883f-9291097-images-thumbs&n=13',
                                     caption=f'Партнёрская программа ProofReader\n\n\n'
-                                    f'Ваша ссылка для партнёрской программы: \n<b>*не настроено*</b>\n\n'
+                                    f'Ваша ссылка для партнёрской программы (Click! чтобы скопировать): \n<code><b>{link}</b></code>\n\n'
                                     f'По ней приведенные вами клиенты будут покупать подписку, а часть стоимости придет на ваш счет: \n<b>*не настроено*</b>\n\n'
                                     f'Ваша прибыль с каждой покупки (скидка не влияет на прибыль) = <b>{salary}%</b>\n\n'
                                     f'Для клиентов по вашей ссылке скидка <b>{sale}%</b>',
