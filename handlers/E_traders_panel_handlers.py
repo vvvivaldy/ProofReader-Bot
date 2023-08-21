@@ -9,9 +9,8 @@ class TempStream:
 
     def create_order_in_object(self, ord, value, mode = False):
             conn, cursor = db_connect()
+            print(f"СОЗДАВАЕМЫЙ ОРДЕР: \n {ord} \n")
             text = ""
-            # print(ord[0]['category'])
-            # print(ord[0]["orderType"])
             if ord[0]["orderType"] == "Market":
                 if ord[0]['category'] == "linear":
                     if len(ord) == 3:
@@ -20,11 +19,12 @@ class TempStream:
 
                         if ord[value]["takeProfit"] != "":
                             text = f"""РЫНОЧНАЯ ЗАЯВКА
+                            
 Категория: <b>Дериватив</b>                        
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
 Количество: <b>{ord[value]["qty"]}</b>
-Цена: <b>{ord[value]["cumExecValue"]} $</b>
+Цена: <b>{ord[value]["avgPrice"]} $</b>
 TakeProfit: <b>{ord[value]["takeProfit"]} $</b>
 StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 
@@ -35,11 +35,11 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                                     f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2) VALUES ('{ord[value]['orderId']}', "
                                     f"'{tp['orderId']}', '{sl['orderId']}' ,"
                                     f"'{ord[value]['symbol']}', '{ord[value]['takeProfit']}', '{ord[value]['stopLoss']}', "
-                                    f"'{self.id}', '', 'open', '{ord[value]['cumExecValue']}', '', '', '', '{ord[value]['qty']}', '{current_date}', 'Market', 'derivatives');")
+                                    f"'{self.id}', '', 'open', '{ord[value]['avgPrice']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Market', 'derivatives');")
                             conn.commit()
                         else:
                             current_date = datetime.now().date()
-                            cursor.execute(f"UPDATE orders SET take_profit = {ord[value]['takeProfit']}, stop_loss = {ord[value]['stopLoss']}, order_id = '{ord[value]['orderId']}', qty = qty + {ord[value]['qty']}, date_1 = '{current_date}' WHERE trader_id = {self.id} AND trade_pair = '{ord[value]['symbol']}' AND status = 'open'")
+                            cursor.execute(f"UPDATE orders SET take_profit = {ord[value]['takeProfit']}, stop_loss = {ord[value]['stopLoss']}, order_id = '{ord[value]['orderId']}', qty = qty + {ord[value]['cumExecQty']}, date_1 = '{current_date}' WHERE trader_id = {self.id} AND trade_pair = '{ord[value]['symbol']}' AND status = 'open'")
                             conn.commit()
 
                     else:
@@ -52,7 +52,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 Категория: <b>Спот</b>                       
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
-Количество монет: <b>{round(float(ord[value]["qty"]), 2)}</b>
+Количество монет: <b>{round(float(ord[value]["cumExecQty"]), 2)}</b>
 Триггерная цена: <b>{ord[value]["triggerPrice"]} $</b>"""
                         if not mode:
                             current_date = datetime.now().date()
@@ -61,7 +61,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                                     f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2, triggeredPrice) VALUES ('{ord[value]['orderId']}', "
                                     f"'', '' ,"
                                     f"'{ord[value]['symbol']}', '', '', "
-                                    f"'{self.id}', '', 'open', '', '', '', '', '{ord[value]['qty']}', '{current_date}', 'Market', 'spot', '{ord[value]['triggerPrice']}');")
+                                    f"'{self.id}', '', 'open', '{ord[value]['avgPrice']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Market', 'spot', '{ord[value]['triggerPrice']}');")
                             conn.commit()
 
                     else:
@@ -77,10 +77,9 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 Категория: <b>Спот</b>
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
-Колиечество монет: <b>{round(float(ord[value]["qty"]), 2)}</b>
+Колиечество монет: <b>{round(float(ord[value]["cumExecQty"]), 2)}</b>
 Цена срабатывания заявки: <b>{ord[value]["price"]}</b>
 Триггерная цена: <b>{float(ord[value]["triggerPrice"])} $</b>"""
-                        # print(ord[0])
                         if not mode:
                             current_date = datetime.now().date()
                             current_date = current_date.strftime('%Y-%m-%d')
@@ -88,7 +87,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                                     f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2, triggeredPrice) VALUES ('{ord[value]['orderId']}', "
                                     f"'', '' ,"
                                     f"'{ord[value]['symbol']}', '', '', "
-                                    f"'{self.id}', '', 'new', '', '', '', '', '{ord[value]['qty']}', '{current_date}', 'Limit', 'spot', '{ord[value]['triggerPrice']}');")
+                                    f"'{self.id}', '', 'new', '{ord[value]['price']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Limit', 'spot', '{ord[value]['triggerPrice']}');")
                             conn.commit()
 
                     else:
@@ -99,12 +98,11 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 
                         tmp = cursor.execute(f'SELECT count(*) FROM orders WHERE trader_id = {self.id} and \
                                          (status = "open" or status = "new") and trade_pair = "{ord[0]["symbol"]}" and type = "Limit"').fetchone()[0]
-                        print(tmp)
                         if tmp != 0:
                             current_date = datetime.now().date()
 
                             qty = float(cursor.execute(f'SELECT qty FROM orders WHERE trader_id = {self.id} and trade_pair = "{ord[0]["symbol"]}" \
-                                             and (status = "open" or status = "new") and type = "Limit"').fetchone()[0]) + float(ord[0]['qty'])
+                                             and (status = "open" or status = "new") and type = "Limit"').fetchone()[0]) + float(ord[0]['cumExecQty'])
                         
                             try:
                                 cursor.execute(
@@ -112,7 +110,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                                 f" status, open_price, close_price, close_order_id, profit, qty, date_1, type) VALUES ('{ord[0]['orderId']}', "
                                 f"'', '' ,"
                                 f"'{ord[0]['symbol']}', '{ord[0]['takeProfit']}', '{ord[0]['stopLoss']}', "
-                                f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['qty']}', '{current_date}', 'Limit', 'derivatives');")
+                                f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['cumExecQty']}', '{current_date}', 'Limit', 'derivatives');")
                             except:
                                 tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
                                 sl = next((n for n in ord if n['stopOrderType'] == 'StopLoss'), None)
@@ -136,7 +134,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 Категория: <b>Дериватив</b>
 Монета: <b>{ord[0]["symbol"]}</b>
 Тип покупки: <b>{ord[0]["side"]}</b>
-Количество: <b>{ord[0]["qty"]}</b>
+Количество: <b>{ord[0]["cumExecQty"]}</b>
 Цена срабатывания заявки: <b>{ord[0]["price"]} $</b>
 TakeProfit: <b>{ord[0]["takeProfit"]} $</b>
 StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
@@ -148,7 +146,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                                 f" status, open_price, close_price, close_order_id, profit, qty, date_1, type) VALUES ('{ord[0]['orderId']}', "
                                 f"'', '' ,"
                                 f"'{ord[0]['symbol']}', '{ord[0]['takeProfit']}', '{ord[0]['stopLoss']}', "
-                                f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['qty']}', '{current_date}', 'Limit');")
+                                f"'{self.id}', '', 'new', '{ord[0]['price']}', '', '', '', '{ord[0]['cumExecQty']}', '{current_date}', 'Limit');")
                                 conn.commit()
                                 conn.close()
                     else:
@@ -177,7 +175,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
 
         # Поиск открытых ордеров (сработанных)
         existence_validate_actual = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
-                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'open' AND tp_order_id != '' AND sl_order_id != ''").fetchone()[0])
+                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()[0])
         
         # Поиск открытых ордеров (несработанных)
         existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
@@ -187,7 +185,6 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         find_opens_market = bool(cursor.execute(f'SELECT count(*) FROM orders WHERE trader_id = "{self.id}" AND trade_pair = "{ord[0]["symbol"]}" \
                                         AND status = "open" AND type = "Market"').fetchone()[0])
         # Если есть сам ордер
-        # print(value, self.value, sep='\n')
         if self.value is not None or self.value == None and ord[0]['category'] == 'spot':
             if ord[0]['category'] == 'spot':
                 value = 0
@@ -231,13 +228,13 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         # говорят о том, что один из стопов был заполнен,а второй деактивен)
                         so_status = ord[value]["orderStatus"]
                         skip_condition = True
-
-                    tp_status = session.get_order_history(
-                        category="linear",
-                        orderId=stop_orders[0])['result']['list'][0]['orderStatus']
-                    sl_status = session.get_order_history(
-                        category="linear",
-                        orderId=stop_orders[1])['result']['list'][0]['orderStatus']
+                    if ord[0]['category'] != 'spot' and len(ord) == 1:
+                        tp_status = session.get_order_history(
+                            category="linear",
+                            orderId=stop_orders[0])['result']['list'][0]['orderStatus']
+                        sl_status = session.get_order_history(
+                            category="linear",
+                            orderId=stop_orders[1])['result']['list'][0]['orderStatus']
 
                     # Выдача статусов
                     if not skip_condition:
@@ -249,27 +246,34 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                             so_status = 'Untriggered'
 
                     # Если ордер продан
-                    if so_status == 'Deactivated':
-                        close_order = session.get_closed_pnl(
-                            category="linear",
-                            limit=1,
-                        )
-                        exit_price = close_order["result"]["list"][0]["avgExitPrice"]
-                        profit = str(round(float(close_order["result"]["list"][0]["closedPnl"]), 2))
-                        order_id = close_order["result"]["list"][0]["orderId"]
+                    if so_status == 'Deactivated' or (so_status == "Filled" and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Sell'):
+                        if so_status == "Deactivated":
+                            close_order = session.get_closed_pnl(
+                                category="linear",
+                                limit=1,
+                            )
+                            exit_price = close_order["result"]["list"][0]["avgExitPrice"]
+                            profit = str(round(float(close_order["result"]["list"][0]["closedPnl"]), 2))
+                            order_id = close_order["result"]["list"][0]["orderId"]
+                        elif so_status == "Filled" and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Sell':
+                            exit_price = float(ord[0]["avgPrice"])
+                            open_price = cursor.execute(f'''SELECT open_price FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                                        trader_id = "{self.id}" AND status = "open" AND type = "Market" ''').fetchall()
+                            profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0][0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
+                            order_id = ord[0]["orderId"]
                         flag = False
                         cursor.execute(f'''UPDATE orders SET status = "closed",
                                         profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
                                         trader_id = "{self.id}" AND status = "open" AND type = "Market" ''')
                         conn.commit()
-                        if ord[1]["category"] == "spot":
+                        if ord[0]["category"] == "spot":
                             cat = "Спот"
                         else:
                             cat = "Дериватив"
                         text = f'''ПОЗИЦИЯ ЗАКРЫТА
 
 Категория: <b>{cat}</b>
-Монета: <b>{ord[1]["symbol"]}</b>
+Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
 Количество: <b>{ord[value]["qty"]}</b>
 Цена: <b>{exit_price} $</b>
