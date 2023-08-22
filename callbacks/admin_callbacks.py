@@ -3,6 +3,12 @@ import sqlite3
 from handlers.A_head_of_handlers import *
 
 
+def block_ref(cursor,id):
+    cursor.execute(f'UPDATE referral SET status = "block" WHERE id = "{id}"')
+    # окно for_bug будет не равно "" только если человек успел получить скидку, но партнер уже в чс
+    cursor.execute(f'DELETE FROM ref_clients WHERE id = "{id}" AND for_bug = ""')
+
+
 def help_func(tek_date, total_dates_list, previous):
     tek_date = t.strptime(str(tek_date.date()), "%Y-%m-%d")
     total_list = [obj for obj in total_dates_list if (obj >= previous) and obj <= tek_date]
@@ -277,6 +283,7 @@ async def add_trader(message: types.Message, state: FSMContext):
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
             cursor.execute(f'UPDATE traders SET status = "block" WHERE trader_id = {trader_id}')
             cursor.execute(f'UPDATE traders SET api_key = "", api_secret = "" WHERE trader_id = {trader_id}')
+            block_ref(cursor, trader_id)
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -311,6 +318,7 @@ async def add_user(message: types.Message, state: FSMContext):
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
             cursor.execute(f'UPDATE users SET status = "block" WHERE user_id = {trader_id}')
             cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = {trader_id}')
+            block_ref(cursor, trader_id)
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -349,6 +357,7 @@ async def set_api(message: types.Message, state: FSMContext):
                 cursor.execute(f'UPDATE users SET status = "free" WHERE user_id = {user_id}')
             elif stat == 'trader':
                 cursor.execute(f'UPDATE traders SET status = "trader" WHERE trader_id = {user_id}')
+            cursor.execute(f'UPDATE referral SET status = "off" WHERE id = "{user_id}"')
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                     text='Пользователь успешно удален из чс.',
@@ -387,8 +396,10 @@ async def set_user_status(conn,id,status, mode = False):
         return False
     if status == 'paid' or mode:
         edit_status_ref(id, status, cursor)
-        time = datetime.now()
-        cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = {id}')
+        check_date = cursor.execute(f'SELECT date FROM ref_clients WHERE client_id = "{id}"').fetchone()[0]
+        if check_date == "":
+            time = datetime.now()
+            cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = "{id}"')
         conn.commit()
         conn.close()
     return True

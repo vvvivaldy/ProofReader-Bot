@@ -65,7 +65,7 @@ async def start_func(message: types.Message):
         # айди после старта не пустое, это число, такой айди есть в бд как партнер, партнер не может пригласить сам себя
         if partner != '' and partner.isdigit() and find_partner:
             if partner != str(message.from_user.id):
-                cursor.execute(f'INSERT INTO ref_clients VALUES ("{partner}",{message.from_user.id},"free","")')
+                cursor.execute(f'INSERT OR REPLACE INTO ref_clients VALUES ("{partner}",{message.from_user.id},"free","","")')
                 conn.commit()
             else:
                 await bot.send_message(chat_id=message.from_user.id,
@@ -179,7 +179,20 @@ async def buy(message: types.Message):
     
 @dp.pre_checkout_query_handler(lambda query: True)
 async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+    conn, cursor = db_connect()
+    partner = cursor.execute(f'SELECT id FROM ref_clients WHERE client_id = "{pre_checkout_q["from"]["id"]}" LIMIT 1').fetchone()
+    if partner != None:
+        data = cursor.execute(f'SELECT sale, status FROM referral WHERE id = "{partner[0]}" LIMIT 1').fetchone()
+        if data[1] == 'on':
+            cursor.execute(f'UPDATE ref_clients SET for_bug = "{data[0]}"')
+            conn.commit()
+            await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
+            return
+    await bot.send_message(chat_id=pre_checkout_q["from"]["id"],
+                            text='Приносим свои извинения. Тот,кто вас пригласил был только что заблокирован.\n\n'+ \
+                            'Деньги не были списаны.\nК сожалению, скидка от партнёра больше недействительна. Вы можете перейти по другой партнерской'+\
+                            'ссылке,чтобы получить скидку',
+                            reply_markup=kb_free)
 
 
 # Результат после оплаты
@@ -222,26 +235,34 @@ async def successfull_payment(message: types.Message):
 
     total = message.successful_payment.total_amount // 100
 
+    #Проверка тотал на скидку. Нужно для того, чтобы если человек купил со скидкой, а партнер уже в чс или не партнер
+    # то наш клиент все таки получил подписку
+    happy_discount = False
+    if total not in prices:
+        happy_discount = True
+
     #Проверка на рефералку
     check_ref = cursor.execute(f'SELECT count(*) FROM ref_clients WHERE client_id = "{message.from_user.id}" LIMIT 1').fetchone()[0]
 
         # Работа с рефералкой
-    if check_ref:
-        # Обновление статуса в ref_clients
-        edit_status_ref(message.from_user.id, 'paid', cursor)
+    if check_ref or happy_discount:
+        if not happy_discount:
+            # Обновление статуса в ref_clients
+            edit_status_ref(message.from_user.id, 'paid', cursor)
 
-        # Запись первой оплаты по рефералке. Если это повторная оплата, то дата не изменится.
-        # Мы храним только 1-ю дату т.к. на 22.08.2023 в ref_clinets у нас может быт только 1 строчка с клиентом,
-        # а смотреть остальные даты покупок мы можем в purchase_history
-        check_date = cursor.execute(f'SELECT date FROM ref_clients WHERE client_id = "{message.from_user.id}"').fetchone()[0]
-        if check_date == "":
-            time = datetime.now()
-            cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = "{message.from_user.id}"')
+            # Запись первой оплаты по рефералке. Если это повторная оплата, то дата не изменится.
+            # Мы храним только 1-ю дату т.к. на 22.08.2023 в ref_clinets у нас может быт только 1 строчка с клиентом,
+            # а смотреть остальные даты покупок мы можем в purchase_history
+            check_date = cursor.execute(f'SELECT date FROM ref_clients WHERE client_id = "{message.from_user.id}"').fetchone()[0]
+            if check_date == "":
+                time = datetime.now()
+                cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = "{message.from_user.id}"')
+
             partner = cursor.execute(f'SELECT id FROM ref_clients WHERE client_id = "{message.from_user.id}" LIMIT 1').fetchone()[0]
 
             # Достаем данные о скидке и профите с покупки
             sal = cursor.execute(f'SELECT sale, salary FROM referral WHERE \
-                                 id = "{partner}" LIMIT 1').fetchone()
+                                    id = "{partner}" LIMIT 1').fetchone()
 
             # Определяем, на какой период была куплена подписка c рефералкой
             total = message.successful_payment.total_amount / (100 * (1 - sal[0]/100))
@@ -253,6 +274,10 @@ async def successfull_payment(message: types.Message):
 
             # Добавляем клиента в копилку
             cursor.execute(f'UPDATE referral SET count_clinents = count_clinents + 1 WHERE id = "{partner}"')
+        else:
+            sale = cursor.execute(f'SELECT for_bug FROM ref_clients WHERE client_id = "{message.from_user.id}" LIMIT 1').fetchone()[0]
+            total = message.successful_payment.total_amount / (100 * (1 - sale/100))
+            cursor.execute(f'DELETE FROM ref_clients WHERE client_id = "{message.from_user.id}"')
             
     if total == prices[0]:
         date1 = "week"
@@ -357,6 +382,7 @@ async def ref(message: types.Message):
             salary = int(cursor.execute(f'SELECT salary FROM referral WHERE id = {message.from_user.id}').fetchone()[0])
             sale = int(cursor.execute(f'SELECT sale FROM referral WHERE id = {message.from_user.id}').fetchone()[0])
             link = cursor.execute(f'SELECT link FROM referral WHERE id = {message.from_user.id}').fetchone()[0]
+            profit = cursor.execute(f'SELECT profit FROM referral WHERE id = {message.from_user.id}').fetchone()[0]
             bank = "*не настроено*"
             ispartner = "on" == cursor.execute(f'SELECT status FROM referral WHERE id = "{message.from_user.id}"').fetchone()[0]
 
@@ -367,7 +393,8 @@ async def ref(message: types.Message):
                                         f'Ваша ссылка для партнёрской программы (Click! чтобы скопировать): \n<code><b>{link}</b></code>\n\n'
                                         f'По ней приведенные вами клиенты будут покупать подписку, а часть стоимости придет на ваш счет: \n<b>{bank}</b>\n\n'
                                         f'Ваша прибыль с каждой покупки (скидка не влияет на прибыль) = <b>{salary}%</b>\n\n'
-                                        f'Для клиентов по вашей ссылке скидка <b>{sale}%</b>',
+                                        f'Для клиентов по вашей ссылке скидка <b>{sale}%</b>\n\n'
+                                        f'Вы заработали с нами: <strong>{profit}₽</strong>',
                                     reply_markup=kb_ref,
                                     parse_mode='html')
             else:
