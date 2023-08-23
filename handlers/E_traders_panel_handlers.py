@@ -45,54 +45,44 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                     else:
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                     f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
-                if ord[0]['category'] == 'spot':    
-                    if ord[0]['triggerPrice'] != '':
-                        text = f"""РЫНОЧНАЯ ЗАЯВКА
+                if ord[0]['category'] == 'spot':
+                    text = f"""РЫНОЧНАЯ ЗАЯВКА
 
 Категория: <b>Спот</b>                       
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
-Количество монет: <b>{round(float(ord[value]["cumExecQty"]), 2)}</b>
-Триггерная цена: <b>{ord[value]["triggerPrice"]} $</b>"""
-                        if not mode:
-                            current_date = datetime.now().date()
-                            current_date = current_date.strftime('%Y-%m-%d')
-                            cursor.execute(f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                                    f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2, triggeredPrice) VALUES ('{ord[value]['orderId']}', "
-                                    f"'', '' ,"
-                                    f"'{ord[value]['symbol']}', '', '', "
-                                    f"'{self.id}', '', 'open', '{ord[value]['avgPrice']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Market', 'spot', '{ord[value]['triggerPrice']}');")
-                            conn.commit()
+Количество монет: <b>{round(float(ord[value]["cumExecQty"]), 2)}</b>"""
+                    if not mode:
+                        current_date = datetime.now().date()
+                        current_date = current_date.strftime('%Y-%m-%d')
+                        cursor.execute(f"INSERT INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
+                                f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2, triggeredPrice) VALUES ('{ord[value]['orderId']}', "
+                                f"'', '' ,"
+                                f"'{ord[value]['symbol']}', '', '', "
+                                f"'{self.id}', '', 'open', '{ord[value]['avgPrice']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Market', 'spot', '{ord[value]['triggerPrice']}');")
+                        conn.commit()
 
-                    else:
-                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                    f'/sendMessage?chat_id={self.id}&text=Вы не установили TriggerPrice. Сделка не высветится у пользователей')
 
 
             elif ord[0]["orderType"] == "Limit":
-                if ord[0]['category'] == 'spot':      
-                    if ord[0]['triggerPrice'] != '':
-                        text = f"""ЛИМИТНАЯ ЗАЯВКА
-                        
+                if ord[0]['category'] == 'spot':
+                    text = f"""ЛИМИТНАЯ ЗАЯВКА
+                    
 Категория: <b>Спот</b>
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
 Колиечество монет: <b>{round(float(ord[value]["cumExecQty"]), 2)}</b>
-Цена срабатывания заявки: <b>{ord[value]["price"]}</b>
-Триггерная цена: <b>{float(ord[value]["triggerPrice"])} $</b>"""
-                        if not mode:
-                            current_date = datetime.now().date()
-                            current_date = current_date.strftime('%Y-%m-%d')
-                            cursor.execute(f"INSERT or REPLACE INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
-                                    f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2, triggeredPrice) VALUES ('{ord[value]['orderId']}', "
-                                    f"'', '' ,"
-                                    f"'{ord[value]['symbol']}', '', '', "
-                                    f"'{self.id}', '', 'new', '{ord[value]['price']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Limit', 'spot', '{ord[value]['triggerPrice']}');")
-                            conn.commit()
+Цена срабатывания заявки: <b>{ord[value]["price"]}</b>"""
+                    if not mode:
+                        current_date = datetime.now().date()
+                        current_date = current_date.strftime('%Y-%m-%d')
+                        cursor.execute(f"INSERT or REPLACE INTO orders (order_id, tp_order_id, sl_order_id, trade_pair, take_profit, stop_loss, trader_id, user_id,"
+                                f" status, open_price, close_price, close_order_id, profit, qty, date_1, type, type_2, triggeredPrice) VALUES ('{ord[value]['orderId']}', "
+                                f"'', '' ,"
+                                f"'{ord[value]['symbol']}', '', '', "
+                                f"'{self.id}', '', 'new', '{ord[value]['price']}', '', '', '', '{ord[value]['cumExecQty']}', '{current_date}', 'Limit', 'spot', '{ord[value]['triggerPrice']}');")
+                        conn.commit()
 
-                    else:
-                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
-                                    f'/sendMessage?chat_id={self.id}&text=Вы не установили TriggerPrice. Сделка не высветится у пользователей')
                 if ord[0]["category"] == "linear":
                     if ord[0]["takeProfit"] != "" and ord[0]["stopLoss"] != "":
 
