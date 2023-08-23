@@ -68,3 +68,23 @@ class Set_Percent(StatesGroup):
 
 class Set_Dollars(StatesGroup):
     dollars = State()
+
+
+class Set_Sale(StatesGroup):
+    pr = State()
+
+
+class Set_Salary(StatesGroup):
+    proc = State()
+
+
+class Personal_Id(StatesGroup):
+    id = State()
+
+
+class Set_Sale_Personal(StatesGroup):
+    pr = State()
+
+
+class Set_Salary_Personal(StatesGroup):
+    proc = State()

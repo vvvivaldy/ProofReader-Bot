@@ -373,6 +373,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                          f'/sendMessage?chat_id={self.id}&text=Стоп ордера были успешно обновлены✅')
 
+
 def tracking(id, conn, cursor, mode='off'):
     if mode == 'off':
         cursor.execute(f"UPDATE traders SET webstream = '0' WHERE trader_id = {id};")

@@ -11,7 +11,8 @@ b2 = KeyboardButton('Наши трейдеры')
 b3 = KeyboardButton("Инструкция")
 b4 = KeyboardButton("Оформить подписку")
 b5 = KeyboardButton('Информация')
-kb_free.add(b1, b3).add(b2, b5).add(b4)
+b6 = KeyboardButton('Партнёрская программа')
+kb_free.add(b1, b3).add(b2, b5).add(b4, b6)
 
 # Платная Клавиатура (Незареганный аккаунт)
 kb_unreg = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -25,7 +26,7 @@ b_settings = KeyboardButton("Настройки бота")
 b_subscr = KeyboardButton("Подписка на трейдера")
 b_info = KeyboardButton("Информация")
 b_start = KeyboardButton("Запустить ProofReader")
-kb_reg.add(b_profile, b_settings).add(b_subscr, b_info).add(b_start)
+kb_reg.add(b_profile, b_settings).add(b_subscr, b_info).add(b6, b_start)
 
 kb_reg_work = ReplyKeyboardMarkup(resize_keyboard=True)
 b_stop = KeyboardButton("Остановить работу")
@@ -107,6 +108,13 @@ kb_instruct2 = ReplyKeyboardMarkup(resize_keyboard=True)
 basd = KeyboardButton("Назад в меню информации")
 kb_instruct2.add(b_ins1).add(b_ins2).add(basd)
 
+# Клава партнерки АДМИН
+kb_admin_ref = ReplyKeyboardMarkup(resize_keyboard=True)
+kar1 = KeyboardButton('Sale %')
+kar2 = KeyboardButton('Salary %')
+kar3 = KeyboardButton('Персональное изм. %')
+kb_admin_ref.add(kar1,kar2).add(kar3)
+
 # Клавиатура админ панели
 kb_admin = ReplyKeyboardMarkup(resize_keyboard=True)
 adb1 = KeyboardButton('Статистика бота')
@@ -115,7 +123,8 @@ adb3 = KeyboardButton('Черный список')
 adb4 = KeyboardButton('Вывод данных о клиенте')
 adb5 = KeyboardButton('Выдать статус')
 adb6 = KeyboardButton('Перешифровка')
-kb_admin.add(adb1, adb2).add(adb3, adb4).add(adb5, adb6)
+adb7 = KeyboardButton('Partnership')
+kb_admin.add(adb1, adb2, adb7).add(adb3, adb4).add(adb5, adb6)
 
 # Клавиатура черного списка
 kb_black_list = ReplyKeyboardMarkup(resize_keyboard=True)
@@ -132,9 +141,9 @@ trade3 = KeyboardButton('Помощь')
 trade4 = KeyboardButton('Вкл отслеживание')
 trade5 = KeyboardButton('Выкл отслеживание')
 kb_trader = ReplyKeyboardMarkup(resize_keyboard=True)
-kb_trader.add(trade1, trade2).add(trade3, b_edit_api).add(trade4)
+kb_trader.add(trade1, trade2).add(trade3, b_edit_api).add(b6).add(trade4)
 kb_trader2 = ReplyKeyboardMarkup(resize_keyboard=True)
-kb_trader2.add(trade1, trade2).add(trade3, b_edit_api).add(trade5)
+kb_trader2.add(trade1, trade2).add(trade3, b_edit_api).add(b6).add(trade5)
 
 
 # Клавиатура статистики

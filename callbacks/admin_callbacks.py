@@ -3,6 +3,12 @@ import sqlite3
 from handlers.A_head_of_handlers import *
 
 
+def block_ref(cursor,id):
+    cursor.execute(f'UPDATE referral SET status = "block" WHERE id = "{id}"')
+    # окно for_bug будет не равно "" только если человек успел получить скидку, но партнер уже в чс
+    cursor.execute(f'DELETE FROM ref_clients WHERE id = "{id}" AND for_bug = ""')
+
+
 def help_func(tek_date, total_dates_list, previous):
     tek_date = t.strptime(str(tek_date.date()), "%Y-%m-%d")
     total_list = [obj for obj in total_dates_list if (obj >= previous) and obj <= tek_date]
@@ -120,8 +126,7 @@ async def admin_callbacks(callback: types.CallbackQuery,):
             with open('cache/cache.txt','r',encoding='utf-8')as data:
                 try:
                     data = data.readlines()[0]
-                    conn = sqlite3.connect('db/database.db')
-                    cursor = conn.cursor()
+                    conn, cursor = db_connect()
                     try:
                         if len(cursor.execute(f'SELECT status FROM traders WHERE trader_id = {data}').fetchone()) == 1: mode = True
                         else: mode = False
@@ -138,14 +143,14 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                         reply_markup=ikst)
-                except:
+                except Exception as e:
+                    print(e)
                     print('Что-то с кэшом')
         
         case 'set_paid':
             with open('cache/cache.txt','r',encoding='utf-8')as data:
                 try:
-                    conn = sqlite3.connect('db/database.db')
-                    cursor = conn.cursor()
+                    conn, cursor = db_connect()
                     data = data.readlines()[0]
                     try:
                         if len(cursor.execute(f'SELECT status FROM traders WHERE trader_id = {data}').fetchone()) == 1: mode = True
@@ -159,14 +164,14 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                         reply_markup=ikst)
-                except:
+                except Exception as e:
+                    print(e)
                     print('Что-то с кэшом')
 
         case 'set_trader':
             with open('cache/cache.txt', 'r', encoding='utf-8') as data:
                 try:
                     data = data.readlines()[0]
-                    conn = sqlite3.connect('db/database.db')
                     res = await set_trader_status(data, 'trader')
                     if res:
                         await callback.message.edit_text(text=f'Статус юзера {data}: trader',
@@ -174,8 +179,19 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                          reply_markup=ikst)
-                except:
+                except Exception as e:
+                    print(e)
                     print('Что-то с кэшом или бывший юзер не удалился из бд')
+
+        case 'sale':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text='Введите число-процент скидки юзеров с партнерки (последний символ - %)')
+            await Set_Sale_Personal.pr.set()
+            
+        case 'salary':
+            await bot.send_message(chat_id=callback.from_user.id,
+                                   text='Введите число-процент заработка партнера (последний символ - %)')
+            await Set_Salary_Personal.proc.set()
 
 
 @dp.message_handler(state=UserStatus.status)
@@ -267,6 +283,7 @@ async def add_trader(message: types.Message, state: FSMContext):
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'trader');""")
             cursor.execute(f'UPDATE traders SET status = "block" WHERE trader_id = {trader_id}')
             cursor.execute(f'UPDATE traders SET api_key = "", api_secret = "" WHERE trader_id = {trader_id}')
+            block_ref(cursor, trader_id)
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -301,6 +318,7 @@ async def add_user(message: types.Message, state: FSMContext):
             cursor.execute(f"""INSERT INTO black_list VALUES ('{trader_id}', 'user');""")
             cursor.execute(f'UPDATE users SET status = "block" WHERE user_id = {trader_id}')
             cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = {trader_id}')
+            block_ref(cursor, trader_id)
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                    text='Пользователь успешно заблокирован',
@@ -339,6 +357,7 @@ async def set_api(message: types.Message, state: FSMContext):
                 cursor.execute(f'UPDATE users SET status = "free" WHERE user_id = {user_id}')
             elif stat == 'trader':
                 cursor.execute(f'UPDATE traders SET status = "trader" WHERE trader_id = {user_id}')
+            cursor.execute(f'UPDATE referral SET status = "off" WHERE id = "{user_id}"')
             conn.commit()
             await bot.send_message(chat_id=message.from_user.id,
                                     text='Пользователь успешно удален из чс.',
@@ -363,7 +382,9 @@ async def set_user_status(conn,id,status, mode = False):
     cursor = conn.cursor()
     try:
         if not mode:
-            cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = {int(id)}')
+            cursor.execute(f'UPDATE users SET status = "{status}" WHERE user_id = "{id}"')
+            if status == 'free':
+                edit_status_ref(id, status, cursor)
         else:
             api = cursor.execute(f'SELECT api_key, api_secret FROM traders WHERE trader_id = {id}').fetchone()
             if api[0] == None:
@@ -374,6 +395,11 @@ async def set_user_status(conn,id,status, mode = False):
         print(e)
         return False
     if status == 'paid' or mode:
+        edit_status_ref(id, status, cursor)
+        check_date = cursor.execute(f'SELECT date FROM ref_clients WHERE client_id = "{id}"').fetchone()[0]
+        if check_date == "":
+            time = datetime.now()
+            cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = "{id}"')
         conn.commit()
         conn.close()
     return True
@@ -395,6 +421,52 @@ status, name, trader_subs) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?)""", (dat
         print('новый трейдр не удалился из таблицы юзеров')
         return False
     if status == 'trader':
+        edit_status_ref(id, status, cursor)
         conn.commit()
         cursor.close()
     return True
+
+
+@dp.message_handler(state=Set_Sale_Personal.pr)
+async def set_sale_personal(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['pr'] = message.text
+    s = await state.get_data()
+    pr = s['pr']
+    id = s['id']
+    print(id)
+    if pr[-1]=='%' and pr[:-1].isdigit() and 1<=float(pr[:-1])<=99:
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE referral SET sale = {pr[:-1]} WHERE id = {id}')
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'Sale для пользователя {id} изменён успешно! Текущий = {pr}',
+                               reply_markup=kb_admin)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Неверное значение",
+                               reply_markup=kb_admin) 
+    await state.reset_state(with_data=False)
+
+
+@dp.message_handler(state=Set_Salary_Personal.proc)
+async def set_sale_personal(message: types.Message, state: FSMContext):
+    async with state.proxy() as proxy:
+        proxy['proc'] = message.text
+    s = await state.get_data()
+    pr = s['proc']
+    id = s['id']
+    if pr[-1]=='%' and pr[:-1].isdigit() and 1<=float(pr[:-1])<=99:
+        conn, cursor = db_connect()
+        cursor.execute(f'UPDATE referral SET salary = {pr[:-1]} WHERE id = {id}')
+        conn.commit()
+        cursor.close()
+        await bot.send_message(chat_id=message.from_user.id,
+                               text=f'Salary для пользователя {id} изменён успешно! Текущий = {pr}',
+                               reply_markup=kb_admin)
+    else:
+        await bot.send_message(chat_id=message.from_user.id,
+                               text="Неверное значение",
+                               reply_markup=kb_admin) 
+    await state.reset_state(with_data=False)

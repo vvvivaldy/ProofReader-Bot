@@ -87,31 +87,20 @@ def next_month(today):
     return today + delta
 
 
-# Проверка профиля а БД
+# Добавление нового пользователя в бд
 async def db_validate(cursor, conn, message, info=None):
-    # Если нет в бд
     if info is None:
         cursor.execute(
             f"""INSERT INTO users VALUES ('{message.from_user.id}', '0', '0', 'free', '', '', '', '', '', '1', 
             'false', '');""")
         cursor.execute("UPDATE counter SET count_users_all_time = count_users_all_time + 1")
         conn.commit()
-    # Если есть в бд
-    else:
-        cursor.execute("SELECT status, api_key FROM users WHERE user_id = ?", (message.from_user.id,))
-        result = cursor.fetchone()
-        # Если статус бесплатный
-        if result[0] == "free":
-            await bot.send_message(chat_id=message.from_user.id,
-                                   text="Мы нашли вашу учетную запись в базе данных.",
-                                   reply_markup=kb_free)
-        # Если статус платный
-        elif result[0] == "paid":
-            if result[1] == "":
-                await bot.send_message(chat_id=message.from_user.id,
-                                       text="Мы нашли вашу учетную запись в базе данных.",
-                                       reply_markup=kb_unreg)
-            else:
-                await bot.send_message(chat_id=message.from_user.id,
-                                       text="Мы нашли вашу учетную запись в базе данных.",
-                                       reply_markup=kb_reg)
+
+
+def edit_status_ref(id, status, cursor):
+        if bool(cursor.execute(f'SELECT 1 FROM ref_clients WHERE client_id = {id} LIMIT 1').fetchone()[0]):
+            if status in ('paid','free'):
+                cursor.execute(f'UPDATE ref_clients SET client_status = "{status}" WHERE client_id = {id}')
+            elif status == 'trader':
+                cursor.execute(f'DELETE FROM ref_clients WHERE client_id = {id}')
+
