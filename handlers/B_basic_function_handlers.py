@@ -323,6 +323,10 @@ async def menu_func(message: types.Message):
                 kb = kb_reg
             elif result[0] == "paid" and result[1] == "":
                 kb = kb_unreg
+            elif result[0] == "trader" and result[1] != "":
+                kb = kb_trader
+            elif result[0] == "trader" and result[1] == "":
+                kb = kb_reg
 
             await bot.send_message(chat_id=message.from_user.id,
                                    text="Вы вернулись в меню",

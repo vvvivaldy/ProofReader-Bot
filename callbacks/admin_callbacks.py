@@ -412,10 +412,10 @@ async def set_trader_status(id, status):
         cursor.execute(f'DELETE FROM users WHERE user_id = {id}')
         if data[0] != '' and data[1] != '':
             cursor.execute(f"""INSERT INTO traders (trader_id, api_key, api_secret, subscribers, history, trader_keys, 
-status, name, trader_subs) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?)""", (data[0], data[1], None, None, None, None, '0'))
+status, name, trader_subs, webstream) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?, ?)""", (data[0], data[1], None, None, None, None, '0', ""))
         else:
             cursor.execute(f"INSERT INTO traders (trader_id, api_key, api_secret, subscribers, history, trader_keys,"
-                           f"status, name, trader_subs) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?)", ('', '', None, None, None, None, "0"))
+                           f"status, name, trader_subs, webstream) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?, ?)", ('', '', None, None, None, None, "0", ""))
     except Exception as e:
         print(e)
         print('новый трейдр не удалился из таблицы юзеров')

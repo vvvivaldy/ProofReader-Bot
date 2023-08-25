@@ -185,8 +185,13 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
             if ord[0]['category'] == 'spot':
                 value = 0
             # Если нет открытого ордера этой монеты или этот ордер лимитный и есть новая лимитка -> отслеживание включено
-            if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) or ord[0]['category'] == 'spot' and webstream == 1:
+            if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1: # FIXME ТОЧНО НАДО ПОМЕНЯТЬ
                 self.create_order_in_object(ord, value)
+                if existence_validate_limit and ord[0]["orderType"] == "Limit":
+                    self.func(self.id)
+                    requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                 f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
+                    return
 
             #Если есть открытый ордер этой монеты в споте
             if (existence_validate_actual or existence_validate_limit):
@@ -305,9 +310,6 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                                     if ordtype == 'Limit':
                                         cursor.execute(f'''UPDATE orders SET status = "closed" WHERE order_id = "{ord[0]["orderId"]}" AND type = "Limit" ''')
 
-
-
-
                             flag = False
                             conn.commit()
                             if ord[0]["category"] == "spot":
@@ -325,6 +327,9 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
 
                             requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                             f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+
+                    elif so_status == "New" and ord[0]['category'] == 'spot':
+                        self.create_order_in_object(ord, value)
 
                     # Если ордер работает
                     elif so_status == 'Untriggered':
