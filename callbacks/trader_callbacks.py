@@ -58,7 +58,7 @@ SL ордер: {item[2]}
         case 'HistoryOrders':
             kb_trader = true_kb(callback.from_user.id)
             conn, cursor = db_connect()
-            orders = cursor.execute(f'SELECT * FROM orders WHERE trader_id = {callback.from_user.id} AND status = "close"').fetchall()
+            orders = cursor.execute(f'SELECT * FROM orders WHERE trader_id = {callback.from_user.id} AND status = "closed"').fetchall()
             if len(orders) > 10:
                 orders = orders[-11:]
             res = ''
