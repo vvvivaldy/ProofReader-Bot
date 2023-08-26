@@ -139,13 +139,13 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                         if not mode:
                             cursor.execute(f'UPDATE users SET api_key = "", api_secret = "" WHERE user_id = "{data}"')
                         conn.commit()
-                        cursor.close()
                     else:
                         await callback.message.edit_text(text=f'Не удалось обновить статус юзера {data}',
                                                         reply_markup=ikst)
                 except Exception as e:
                     print(e)
                     print('Что-то с кэшом')
+                cursor.close()
         
         case 'set_paid':
             with open('cache/cache.txt','r',encoding='utf-8')as data:
@@ -167,6 +167,7 @@ async def admin_callbacks(callback: types.CallbackQuery,):
                 except Exception as e:
                     print(e)
                     print('Что-то с кэшом')
+                cursor.close()
 
         case 'set_trader':
             with open('cache/cache.txt', 'r', encoding='utf-8') as data:
@@ -393,15 +394,16 @@ async def set_user_status(conn,id,status, mode = False):
             cursor.execute(f"INSERT INTO users VALUES (?,?,?,?,?,?,'','','',?, '','')", (id, "0", "0", status, api[0], api[1], 1))
     except Exception as e:
         print(e)
+        cursor.close()
         return False
     if status == 'paid' or mode:
-        edit_status_ref(id, status, cursor)
-        check_date = cursor.execute(f'SELECT date FROM ref_clients WHERE client_id = "{id}"').fetchone()[0]
-        if check_date == "":
-            time = datetime.now()
-            cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = "{id}"')
+        if edit_status_ref(id, status, cursor):
+            check_date = cursor.execute(f'SELECT date FROM ref_clients WHERE client_id = "{id}"').fetchone()[0]
+            if check_date == "":
+                time = datetime.now()
+                cursor.execute(f'UPDATE ref_clients SET date = "{time}" WHERE client_id = "{id}"')
         conn.commit()
-        conn.close()
+        cursor.close()
     return True
 
 
@@ -419,11 +421,12 @@ status, name, trader_subs) VALUES ({id}, ?, ?, ?, ?, ?, 'trader', ?, ?)""", (dat
     except Exception as e:
         print(e)
         print('новый трейдр не удалился из таблицы юзеров')
+        cursor.close()
         return False
     if status == 'trader':
         edit_status_ref(id, status, cursor)
         conn.commit()
-        cursor.close()
+    cursor.close()
     return True
 
 

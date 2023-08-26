@@ -98,9 +98,11 @@ async def db_validate(cursor, conn, message, info=None):
 
 
 def edit_status_ref(id, status, cursor):
-        if bool(cursor.execute(f'SELECT 1 FROM ref_clients WHERE client_id = {id} LIMIT 1').fetchone()[0]):
+        flag = bool(cursor.execute(f'SELECT 1 FROM ref_clients WHERE client_id = {id} LIMIT 1').fetchone())
+        if flag:
             if status in ('paid','free'):
                 cursor.execute(f'UPDATE ref_clients SET client_status = "{status}" WHERE client_id = {id}')
             elif status == 'trader':
                 cursor.execute(f'DELETE FROM ref_clients WHERE client_id = {id}')
+        return flag
 

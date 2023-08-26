@@ -98,6 +98,9 @@ async def info(message: types.Message):
         await message.answer(text="Выберите действие", parse_mode='html', reply_markup=kb_inform)
 
     elif trader_validate(message.from_user.id):
+
+        #FIXME: такого уже нет, переделать на проверку из бд
+
         global stream_websockets
         if stream_websockets[f'stream_{message.from_user.id}']:
             kb = kb_trader2
@@ -179,13 +182,16 @@ async def buy(message: types.Message):
     
 @dp.pre_checkout_query_handler(lambda query: True)
 async def pre_checkout_query(pre_checkout_q: types.PreCheckoutQuery):
+    print(pre_checkout_q)
     conn, cursor = db_connect()
     partner = cursor.execute(f'SELECT id FROM ref_clients WHERE client_id = "{pre_checkout_q["from"]["id"]}" LIMIT 1').fetchone()
+    print(partner)
     if partner != None:
         data = cursor.execute(f'SELECT sale, status FROM referral WHERE id = "{partner[0]}" LIMIT 1').fetchone()
         if data[1] == 'on':
             cursor.execute(f'UPDATE ref_clients SET for_bug = "{data[0]}"')
             conn.commit()
+            cursor.close()
             await bot.answer_pre_checkout_query(pre_checkout_q.id, ok=True)
             return
     await bot.send_message(chat_id=pre_checkout_q["from"]["id"],
