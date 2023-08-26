@@ -45,13 +45,15 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
                     else:
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                     f'/sendMessage?chat_id={self.id}&text=Вы не установили StopLoss или TakeProfit. Сделка не высветится у пользователей')
-                if ord[0]['category'] == 'spot':
+                if ord[0]['category'] == 'spot' and ord[0]['orderType'] != 'Filled':
+                    print(ord[0]['orderType'])
                     text = f"""РЫНОЧНАЯ ЗАЯВКА
 
 Категория: <b>Спот</b>                       
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
 Количество монет: <b>{round(float(ord[value]["cumExecQty"]), 2)}</b>"""
+
                     if not mode:
                         current_date = datetime.now().date()
                         current_date = current_date.strftime('%Y-%m-%d')
@@ -65,7 +67,7 @@ StopLoss: <b>{ord[value]["stopLoss"]} $</b>"""
 
 
             elif ord[0]["orderType"] == "Limit":
-                if ord[0]['category'] == 'spot':
+                if ord[0]['category'] == 'spot' and ord[0]['orderType'] != 'Filled':
                     text = f"""ЛИМИТНАЯ ЗАЯВКА
                     
 Категория: <b>Спот</b>
@@ -167,6 +169,10 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         existence_validate_actual = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
                                                         AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()[0])
         
+        # Для частичного закрытия
+        existence_validate_actual_spot = cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
+                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'open' AND qty != '0'").fetchall()[0][0]
+        
         # Поиск открытых ордеров (несработанных)
         existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'new'").fetchone()[0])
@@ -179,7 +185,7 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
             if ord[0]['category'] == 'spot':
                 value = 0
             # Если нет открытого ордера этой монеты или этот ордер лимитный и есть новая лимитка -> отслеживание включено
-            if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1:
+            if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) or ord[0]['category'] == 'spot' and webstream == 1:
                 self.create_order_in_object(ord, value)
 
             #Если есть открытый ордер этой монеты в споте
@@ -204,12 +210,12 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                     AND trader_id = '{self.id}' AND trade_pair = '{ord[0]['symbol']}'").fetchall()
 
                 # Если есть рыночные ордера
-                if existence_validate_actual and find_opens_market:
+                if existence_validate_actual:
                     skip_condition = False
                     stop_orders = cursor.execute(f"SELECT tp_order_id, sl_order_id FROM orders WHERE trader_id = '{self.id}' \
                                                  AND trade_pair = '{ord[0]['symbol']}' AND status = 'open' AND type = 'Market'").fetchone()
 
-                    if len(ord) == 2 or ord[0]['category'] == 'spot' and len(ord) == 1: # условие для определения и фильтрации не нужных исходящих ордеров.
+                    if len(ord) == 2 or ord[0]['category'] == 'spot': # условие для определения и фильтрации не нужных исходящих ордеров.
                         # Было принято такое решение т.к. закрытие по стопам определяется не путем принятия исходящих ордеров, а путем получение их статуса по их id.
                         # При срабатывании стопа, мы получаем сначала один ордер со статусом triggered, на котором в большинстве случаев стоп ордера уже заполнились,
                         # Затем, мы получим два ордера, это будут стоп лосс и тейк профит, проверка идет заново и это вызывает посторный вызов ф-ций, которые не должны
@@ -245,31 +251,79 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                             exit_price = close_order["result"]["list"][0]["avgExitPrice"]
                             profit = str(round(float(close_order["result"]["list"][0]["closedPnl"]), 2))
                             order_id = close_order["result"]["list"][0]["orderId"]
-                        elif so_status == "Filled" and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Sell':
-                            exit_price = float(ord[0]["avgPrice"])
-                            open_price = cursor.execute(f'''SELECT open_price FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                                        trader_id = "{self.id}" AND status = "open" AND type = "Market" ''').fetchall()
-                            profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0][0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
-                            order_id = ord[0]["orderId"]
-                        flag = False
-                        cursor.execute(f'''UPDATE orders SET status = "closed",
+                            cursor.execute(f'''UPDATE orders SET status = "closed",
                                         profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
                                         trader_id = "{self.id}" AND status = "open" AND type = "Market" ''')
-                        conn.commit()
-                        if ord[0]["category"] == "spot":
-                            cat = "Спот"
-                        else:
-                            cat = "Дериватив"
-                        text = f'''ПОЗИЦИЯ ЗАКРЫТА
+                        elif so_status == "Filled" and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Sell':
+                            if ord[0]["orderType"] == 'Market':
+                                ordtype = "Market"
+                            elif ord[0]["orderType"] == 'Limit':
+                                ordtype = "Limit"
+                            if existence_validate_actual_spot == 1:
+                                position = "ПОЗИЦИЯ ЗАКРЫТА"
+                                exit_price = float(ord[0]["avgPrice"])
+                                order_id = ord[0]["orderId"]
+                                
+
+                                open_price = cursor.execute(f'''SELECT open_price FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                                        trader_id = "{self.id}" AND status = "open" AND type = "{ordtype}"''').fetchone()
+                                profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0][0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
+                                cursor.execute(f'''UPDATE orders SET status = "closed",
+                                        profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                        trader_id = "{self.id}" AND status = "open" AND type = "{ordtype}" ''')
+                               
+                                        
+                            else:
+                                position = "ПОЗИЦИЯ ЧАСТИЧНО ЗАКРЫТА"
+
+                                qty_all = cursor.execute(f'''SELECT qty, order_id FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                                        trader_id = "{self.id}" AND status = "open"''').fetchall()
+                                qty_summ = 0
+                                index = 0
+                                open_price = 0
+                                profit = 0
+                                for i in qty_all:
+                                    qty_summ += i[0]
+                                    exit_price = float(ord[0]["avgPrice"])
+                                    open_price = cursor.execute(f'''SELECT open_price FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                                        trader_id = "{self.id}" AND status = "open"''').fetchall()
+                                    profit += (exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0][0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price)
+                                if qty_summ >= float(ord[value]["qty"]):
+                                    qty_summ -= float(ord[value]["qty"])
+                                    for i in qty_all:
+                                        order_id = ord[0]["orderId"]
+                                        order_id_1 = i[1]
+                                        cursor.execute(f'''UPDATE orders SET status = "closed",
+                                            profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                            trader_id = "{self.id}" AND status = "open" AND order_id = "{order_id_1}"''')
+                                        index += 1
+                                if qty_summ != 0:
+                                    print(index)
+                                    order_id = qty_all[index - 1][1]
+                                    cursor.execute(f'''UPDATE orders set qty = '{qty_summ}', status = "open", profit = "", close_price = "", close_order_id = ""
+                                                    WHERE order_id = "{order_id}"''')
+                                    if ordtype == 'Limit':
+                                        cursor.execute(f'''UPDATE orders SET status = "closed" WHERE order_id = "{ord[0]["orderId"]}" AND type = "Limit" ''')
+
+
+                                    
+                                    
+                            flag = False
+                            conn.commit()
+                            if ord[0]["category"] == "spot":
+                                cat = "Спот"
+                            else:
+                                cat = "Дериватив"
+                            text = f'''{position}
 
 Категория: <b>{cat}</b>
 Монета: <b>{ord[value]["symbol"]}</b>
 Тип покупки: <b>{ord[value]["side"]}</b>
 Количество: <b>{ord[value]["qty"]}</b>
 Цена: <b>{exit_price} $</b>
-Профит: <b>{profit} $</b>'''
+Профит: <b>{round(profit, 2)} $</b>'''
 
-                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                            requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                             f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
 
                     # Если ордер работает
@@ -283,7 +337,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         return
 
                     # Обновление данных при закрытии по стоп-ордеру
-                    elif so_status == 'Filled':
+                    elif so_status == 'Filled' and ord[0]["category"] != 'spot':
                         if skip_condition:
                             # создаем массив с одним элементом -> исполненным ордером. Это предотвратит поломку кода ниже
                             tmp = []
