@@ -32,13 +32,13 @@ async def pay(callback: types.CallbackQuery):
         if partner != None:
             try:
                 can_sale = cursor.execute(f'SELECT status, sale FROM referral WHERE id = "{partner[0]}"').fetchone()
-                cursor.close()
                 # Проверка партнера "на наличие в чс". Те,кто в чс или потеряли партнерку - со статусом block либо off
                 if can_sale[0] == 'on':
                     PRICE = PRICE * (1 - can_sale[1]/100)
                     label = f"Подписка на {callback.data}. Скидка - {can_sale[1]}% от партнёра"
             except:
                 pass
+        cursor.close()
             
         #приведение цены в нужный вид
         PRICE = int(PRICE * 100)
