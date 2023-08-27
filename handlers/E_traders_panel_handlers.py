@@ -397,11 +397,12 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         cursor.execute(f"""UPDATE orders SET open_price = '{aver}', qty = '{data[1] + new_qty}' WHERE trade_pair = '{ord[0]["symbol"]}' AND trader_id = '{self.id}' AND status = 'open' AND type_2 = 'spot'""")
                         conn.commit()
                         cursor.close()
+                        a = '{:f}'.format(new_open_price).rstrip('0')
                         text = f"""ВЫ ДОКУПИЛИ МОНЕТУ {ord[0]["symbol"]}
     
-Куплено: <b>{new_qty}</b>
-Цена покупки: <b>{new_open_price}</b>
-Текущее кол-во: <b>{data[1] + new_qty}</b>
+Куплено: <b>{round(new_qty, 2)}</b>
+Цена покупки: <b>{a}</b>
+Текущее кол-во: <b>{round(data[1] + new_qty, 2)}</b>
 Текущая средняя цена: <b>{round(aver, 2)}</b>"""
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                      f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
