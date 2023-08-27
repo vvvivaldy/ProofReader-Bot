@@ -1,3 +1,5 @@
+import decimal
+
 from handlers.D_paid_function_handlers import *
 from callbacks.trader_callbacks import *
 
@@ -186,8 +188,16 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
                 value = 0
             # Если нет открытого ордера этой монеты или этот ордер лимитный и есть новая лимитка -> отслеживание включено
             if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1: # FIXME ТОЧНО НАДО ПОМЕНЯТЬ
-                self.create_order_in_object(ord, value)
-                if existence_validate_limit and ord[0]["orderType"] == "Limit":
+                if ord[0]["side"] != "Sell" and ord[0]["category"] == 'spot':
+                    self.create_order_in_object(ord, value)
+                    if existence_validate_limit and ord[0]["orderType"] == "Limit":
+                        self.func(self.id)
+                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                     f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
+                        return
+                else:
+                    requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                 f'/sendMessage?chat_id={self.id}&text=Вы попытались закрыть неотслеженный ордер. Подписчики это не увидят.&reply_markup={kb_trader}')
                     self.func(self.id)
                     requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                  f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
@@ -268,11 +278,10 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                                 position = "ПОЗИЦИЯ ЗАКРЫТА"
                                 exit_price = float(ord[0]["avgPrice"])
                                 order_id = ord[0]["orderId"]
-
-
-                                open_price = cursor.execute(f'''SELECT open_price FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                open_price = cursor.execute(f'''SELECT CAST(open_price as text) FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
                                                         trader_id = "{self.id}" AND status = "open" AND type = "{ordtype}"''').fetchone()
-                                profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0][0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
+                                print(open_price)
+                                profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
                                 cursor.execute(f'''UPDATE orders SET status = "closed",
                                         profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
                                         trader_id = "{self.id}" AND status = "open" AND type = "{ordtype}" ''')
@@ -378,6 +387,24 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         print('Стоп-ордер успешно сработал')
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                         f'/sendMessage?chat_id={self.id}&text={text}&reply_markup={kb_trader}&parse_mode=HTML')
+                        return
+
+                    elif "Filled" in so_status and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Buy' and webstream == 1:
+                        new_open_price = float(ord[0]["avgPrice"])
+                        new_qty = float(ord[0]["cumExecQty"])
+                        data = cursor.execute(f"""SELECT open_price, qty FROM orders WHERE trade_pair = '{ord[0]['symbol']}' AND trader_id = '{self.id}' AND status = 'open' AND type_2 = 'spot'""").fetchone()
+                        aver = (float(data[0]) * float(data[1]) + new_open_price * new_qty) / new_qty + float(data[1])
+                        cursor.execute(f"""UPDATE orders SET open_price = '{aver}', qty = '{data[1] + new_qty}' WHERE trade_pair = '{ord[0]["symbol"]}' AND trader_id = '{self.id}' AND status = 'open' AND type_2 = 'spot'""")
+                        conn.commit()
+                        cursor.close()
+                        text = f"""ВЫ ДОКУПИЛИ МОНЕТУ {ord[0]["symbol"]}
+    
+Куплено: <b>{new_qty}</b>
+Цена покупки: <b>{new_open_price}</b>
+Текущее кол-во: <b>{data[1] + new_qty}</b>
+Текущая средняя цена: <b>{round(aver, 2)}</b>"""
+                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                     f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
                         return
 
                 # Если лимитные
