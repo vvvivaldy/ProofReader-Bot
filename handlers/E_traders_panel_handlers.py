@@ -171,9 +171,6 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         existence_validate_actual = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
                                                         AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()[0])
         
-        # Для частичного закрытия
-        existence_validate_actual_spot = cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
-                                                        AND trade_pair = '{ord[0]['symbol']}' AND status = 'open' AND qty != '0'").fetchall()[0][0]
 
         # Поиск открытых ордеров (несработанных)
         existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
@@ -270,54 +267,31 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                                         profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
                                         trader_id = "{self.id}" AND status = "open" AND type = "Market" ''')
                         elif so_status == "Filled" and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Sell':
-                            if ord[0]["orderType"] == 'Market':
-                                ordtype = "Market"
-                            elif ord[0]["orderType"] == 'Limit':
-                                ordtype = "Limit"
-                            if existence_validate_actual_spot == 1:
+                            exit_price = float(ord[0]["avgPrice"])
+                            order_id = ord[0]["orderId"]
+                            open_price = cursor.execute(f'''SELECT CAST(open_price as text) FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                                        trader_id = "{self.id}" AND status = "open"''').fetchone()
+                            qty_ord = cursor.execute(f'''SELECT qty FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                        trader_id = "{self.id}" AND status = "open"''').fetchone()[0]
+                            profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
+                            exit_price = '{:f}'.format(exit_price).rstrip('0')
+                            if qty_ord <= float(ord[0]['qty']):
                                 position = "ПОЗИЦИЯ ЗАКРЫТА"
-                                exit_price = float(ord[0]["avgPrice"])
-                                order_id = ord[0]["orderId"]
-                                open_price = cursor.execute(f'''SELECT CAST(open_price as text) FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                                        trader_id = "{self.id}" AND status = "open" AND type = "{ordtype}"''').fetchone()
-                                print(open_price)
-                                profit = exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price
                                 cursor.execute(f'''UPDATE orders SET status = "closed",
                                         profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                        trader_id = "{self.id}" AND status = "open" AND type = "{ordtype}" ''')
-
-
-                            else:
+                                        trader_id = "{self.id}" AND status = "open"''')
+                            elif qty_ord > float(ord[0]['qty']):
                                 position = "ПОЗИЦИЯ ЧАСТИЧНО ЗАКРЫТА"
+                                qty_new = qty_ord - float(ord[0]['qty'])
+                                cursor.execute(f'''UPDATE orders SET profit = "{profit}", qty = "{qty_new}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
+                                        trader_id = "{self.id}" AND status = "open"''')
 
-                                qty_all = cursor.execute(f'''SELECT qty, order_id FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                                        trader_id = "{self.id}" AND status = "open"''').fetchall()
-                                qty_summ = 0
-                                index = 0
-                                open_price = 0
-                                profit = 0
-                                for i in qty_all:
-                                    qty_summ += i[0]
-                                    exit_price = float(ord[0]["avgPrice"])
-                                    open_price = cursor.execute(f'''SELECT open_price FROM orders WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                                        trader_id = "{self.id}" AND status = "open"''').fetchall()
-                                    profit += (exit_price * float(ord[0]["cumExecQty"]) - float(open_price[0][0]) * float(ord[0]["cumExecQty"]) - float(ord[0]["cumExecFee"]) * exit_price)
-                                if qty_summ >= float(ord[value]["qty"]):
-                                    qty_summ -= float(ord[value]["qty"])
-                                    for i in qty_all:
-                                        order_id = ord[0]["orderId"]
-                                        order_id_1 = i[1]
-                                        cursor.execute(f'''UPDATE orders SET status = "closed",
-                                            profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
-                                            trader_id = "{self.id}" AND status = "open" AND order_id = "{order_id_1}"''')
-                                        index += 1
-                                if qty_summ != 0:
-                                    print(index)
-                                    order_id = qty_all[index - 1][1]
-                                    cursor.execute(f'''UPDATE orders set qty = '{qty_summ}', status = "open", profit = "", close_price = "", close_order_id = ""
-                                                    WHERE order_id = "{order_id}"''')
-                                    if ordtype == 'Limit':
-                                        cursor.execute(f'''UPDATE orders SET status = "closed" WHERE order_id = "{ord[0]["orderId"]}" AND type = "Limit" ''')
+
+                            
+                            
+
+
+                            
 
                             flag = False
                             conn.commit()
@@ -408,6 +382,9 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
 Текущая средняя цена: <b>{aver_price}</b>"""
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                      f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
+                        self.func(self.id)
+                        requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                                 f'/sendMessage?chat_id={self.id}&text=Отслеживание OFF❌&reply_markup={kb_trader}')
                         return
 
                 # Если лимитные
