@@ -393,17 +393,19 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                         new_open_price = float(ord[0]["avgPrice"])
                         new_qty = float(ord[0]["cumExecQty"])
                         data = cursor.execute(f"""SELECT open_price, qty FROM orders WHERE trade_pair = '{ord[0]['symbol']}' AND trader_id = '{self.id}' AND status = 'open' AND type_2 = 'spot'""").fetchone()
-                        aver = (float(data[0]) * float(data[1]) + new_open_price * new_qty) / new_qty + float(data[1])
+                        print(data)
+                        aver = (float(data[0]) * float(data[1]) + new_open_price * new_qty) / (new_qty + float(data[1]))
                         cursor.execute(f"""UPDATE orders SET open_price = '{aver}', qty = '{data[1] + new_qty}' WHERE trade_pair = '{ord[0]["symbol"]}' AND trader_id = '{self.id}' AND status = 'open' AND type_2 = 'spot'""")
                         conn.commit()
                         cursor.close()
-                        a = '{:f}'.format(new_open_price).rstrip('0')
+                        price_a = '{:f}'.format(new_open_price).rstrip('0')
+                        aver_price = '{:f}'.format(aver).rstrip('0')
                         text = f"""ВЫ ДОКУПИЛИ МОНЕТУ {ord[0]["symbol"]}
     
 Куплено: <b>{round(new_qty, 2)}</b>
-Цена покупки: <b>{a}</b>
+Цена покупки: <b>{price_a}</b>
 Текущее кол-во: <b>{round(data[1] + new_qty, 2)}</b>
-Текущая средняя цена: <b>{round(aver, 2)}</b>"""
+Текущая средняя цена: <b>{aver_price}</b>"""
                         requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
                                      f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
                         return
