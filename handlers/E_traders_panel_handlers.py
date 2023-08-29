@@ -166,15 +166,21 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         value = next((ord.index(n) for n in ord if "orderStatus" in n and n["orderStatus"] == "Filled"), None)
         self.value = value
         self.ord = ord
+        
+        existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
+                                                       AND trade_pair = '{ord[0]['symbol']}' AND status = 'new'").fetchone()[0])
 
         # Поиск открытых ордеров (сработанных)
         existence_validate_actual = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
                                                         AND trade_pair = '{ord[0]['symbol']}' AND status = 'open'").fetchone()[0])
+        print(existence_validate_actual)
         
-
+        # Поиск лимиток с тем же айди
+        existence_limit_id = bool(cursor.execute(f"""SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
+                                                   AND order_id = '{ord[0]["orderId"]}' AND type_2 = 'spot'""").fetchone()[0])
+        
         # Поиск открытых ордеров (несработанных)
-        existence_validate_limit = bool(cursor.execute(f"SELECT count(*) FROM orders WHERE trader_id = '{self.id}' \
-                                                       AND trade_pair = '{ord[0]['symbol']}' AND status = 'new'").fetchone()[0])
+        
         
         # Поиск открытых рыночных ордеров (нужно для фильтрации лишних приходящих ордеров в случае закрытия по стоп ордеру)
         find_opens_market = bool(cursor.execute(f'SELECT count(*) FROM orders WHERE trader_id = "{self.id}" AND trade_pair = "{ord[0]["symbol"]}" \
@@ -183,6 +189,16 @@ StopLoss: <b>{ord[0]["stopLoss"]} $</b>"""
         if self.value is not None or self.value == None and ord[0]['category'] == 'spot':
             if ord[0]['category'] == 'spot':
                 value = 0
+            # Если в бд есть лимитка с таким же айди что и у отслеженной лимитки и у нее (у отслеженной) статус filled
+            if existence_limit_id and ord[0]["orderStatus"] != 'Cancelled':
+                if ord[0]["side"] == 'Buy':
+                    text = f"Ордер на покупку <b>{ord[0]['symbol']}</b> стал активным, эта монета также была куплена у ваших подписчиков."
+                    cursor.execute(f"UPDATE orders SET status = 'open' WHERE order_id = '{ord[0]['orderId']}'")
+                elif ord[0]["side"] == 'Sell':
+                    text = f"Ордер на продажу <b>{ord[0]['symbol']}</b> стал активным, эта монета также была продана у ваших подписчиков."
+                    cursor.execute(f"UPDATE orders SET status = 'closed' WHERE order_id = '{ord[0]['orderId']}'")
+                requests.get(f'https://api.telegram.org/bot{os.getenv("TG_TOKEN")}' + \
+                         f'/sendMessage?chat_id={self.id}&text={text}&parse_mode=HTML')
             # Если нет открытого ордера этой монеты или этот ордер лимитный и есть новая лимитка -> отслеживание включено
             if (not existence_validate_actual or (existence_validate_limit and ord[0]["orderType"] == "Limit")) and webstream == 1: # FIXME ТОЧНО НАДО ПОМЕНЯТЬ
                 if ord[0]["side"] != "Sell" and ord[0]["category"] == 'spot':
@@ -220,7 +236,8 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                 isexist = cursor.execute(
                     f"SELECT order_id FROM orders WHERE status = 'new' AND type = 'Limit' \
                     AND trader_id = '{self.id}' AND trade_pair = '{ord[0]['symbol']}'").fetchall()
-
+                print(isexist)
+                
                 # Если есть рыночные ордера
                 if existence_validate_actual:  # and find_opens_market:
                     skip_condition = False
@@ -266,6 +283,7 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
                             cursor.execute(f'''UPDATE orders SET status = "closed",
                                         profit = "{profit}", close_price = "{exit_price}", close_order_id = "{order_id}" WHERE trade_pair = "{ord[0]['symbol']}" AND 
                                         trader_id = "{self.id}" AND status = "open" AND type = "Market" ''')
+                        
                         elif so_status == "Filled" and ord[0]['category'] == 'spot' and ord[0]['side'] == 'Sell':
                             exit_price = float(ord[0]["avgPrice"])
                             order_id = ord[0]["orderId"]
@@ -389,8 +407,11 @@ ID ордера: <b>{ord[0]["orderId"]}</b>
 
                 # Если лимитные
                 else:
+                    print('OK')
                     for item in isexist:
+                        print('OK')
                         if item[0] == int(ord[0]['orderId']):
+                            print('OK')
                             text = f"Ордер на покупку <b>{ord[0]['symbol']}</b> стал активным. Данная монета была также куплена у всех ваших подписчиков."
                             if ord[0]["category"] != "spot":
                                 tp = next((n for n in ord if n['stopOrderType'] == 'TakeProfit'), None)
