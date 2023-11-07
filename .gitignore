@@ -4,5 +4,4 @@
 /.idea/
 /handlers/__pycache__/
 /callbacks/__pycache__/
-/db/*.db
 /__pycache__
