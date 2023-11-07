@@ -59,10 +59,12 @@ ikbtn1 = InlineKeyboardButton(text='Трейдер', callback_data='CTrader')
 ikbtn2 = InlineKeyboardButton(text='Юзер', callback_data='CUser')
 inl_kb_status.add(ikbtn1, ikbtn2)
 
-ikb_quantity = InlineKeyboardMarkup(row_width=2)
-infinity = InlineKeyboardButton(text='Бесконечное', callback_data='Einfinity')
-personal = InlineKeyboardButton(text='Персональное', callback_data='Epersonal')
-ikb_quantity.add(infinity).add(personal)
+inl_ref_pocent = InlineKeyboardMarkup(row_width=2)
+rp1 = InlineKeyboardButton(text='Sale %', callback_data='Csale')
+rp2 = InlineKeyboardButton(text='Salary %', callback_data='Csalary')
+inl_ref_pocent.add(rp1, rp2)
+
+"""ДЛЯ ТРЕЙДЕРА"""
 
 # Трейдер статистика
 ikb_trader_stat = InlineKeyboardMarkup(row_width=1)
@@ -71,8 +73,32 @@ itsb2 = InlineKeyboardButton(text='Открытые сделки', callback_data
 itsb3 = InlineKeyboardButton(text='История сделок',callback_data='EHistoryOrders')
 ikb_trader_stat.add(itsb1,itsb2,itsb3)
 
+# Клавиатура вида контракта
+kb_contract = InlineKeyboardMarkup(resize_keyboard=True)
+conb1 = InlineKeyboardButton("Линейный", callback_data='Dlinear')
+conb2 = InlineKeyboardButton("Обратный", callback_data='Dinverse')
+kb_contract.add(conb1).add(conb2)
+
+ikb_quantity = InlineKeyboardMarkup(row_width=2)
+infinity = InlineKeyboardButton(text='Бесконечное', callback_data='Einfinity')
+personal = InlineKeyboardButton(text='Персональное', callback_data='Epersonal')
+ikb_quantity.add(infinity).add(personal)
+
 
 kb_order = InlineKeyboardMarkup(row_width=2)
 k1 = InlineKeyboardButton(text='Отправить', callback_data='EpushOrder')
 k2 = InlineKeyboardButton(text='Отмена', callback_data='EcancelOrder')
 kb_order.add(k1).add(k2)
+
+"""РЕФЕРАЛКИ"""
+
+# Еще не партнёр
+kb_ref_np = InlineKeyboardMarkup(row_width=2)
+knp1 = InlineKeyboardButton(text='Стать партнёром', callback_data='Rget_partnership')
+knp2 = InlineKeyboardButton(text='Что это?', callback_data='Rget_partnership_info')
+kb_ref_np.add(knp1,knp2)
+
+# Рефералки когда партнер
+kb_ref = InlineKeyboardMarkup(row_width=2)
+krf2 = InlineKeyboardButton(text='Сменить счет вывода',callback_data='Rbank')
+kb_ref.add(krf2,knp2)
